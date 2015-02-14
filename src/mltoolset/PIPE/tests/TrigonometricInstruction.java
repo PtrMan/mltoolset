@@ -10,7 +10,7 @@ public class TrigonometricInstruction implements mltoolset.PIPE.program.Instruct
 {
 
     @Override
-    public Instruction getClone()
+    public Instruction getInstance()
     {
         return new TrigonometricInstruction(type, index);
     }

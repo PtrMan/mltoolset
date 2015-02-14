@@ -2,6 +2,7 @@
 package mltoolset.PIPE;
 
 import mltoolset.PIPE.PropabilisticPrototypeTree.Node;
+import mltoolset.PIPE.program.Program;
 
 public interface ProblemspecificDescriptor
 {
@@ -21,5 +22,7 @@ public interface ProblemspecificDescriptor
 
 
     public Node createPptNode();
+
+    public String getDescriptionOfProgramAsString(Program elitist);
     
 }

@@ -1,6 +1,7 @@
 
 package mltoolset.PIPE.tests;
 
+import java.util.Random;
 import mltoolset.PIPE.program.Instruction;
 
 /**
@@ -9,10 +10,11 @@ import mltoolset.PIPE.program.Instruction;
  */
 public class TerminalNumberConstantInstruction implements mltoolset.PIPE.program.Instruction
 {
-    public TerminalNumberConstantInstruction(float value, int index)
+    public TerminalNumberConstantInstruction(float value, int index, Random random)
     {
-        this.value = value;
+        this.value = random.nextFloat();
         this.index = index;
+        this.random = random;
     }
     
     @Override
@@ -34,10 +36,11 @@ public class TerminalNumberConstantInstruction implements mltoolset.PIPE.program
     
     private float value;
     private int index;
+    private Random random;
 
     @Override
-    public Instruction getClone()
+    public Instruction getInstance()
     {
-        return new TerminalNumberConstantInstruction(value, index);
+        return new TerminalNumberConstantInstruction(random.nextFloat(), index, random);
     }
 }

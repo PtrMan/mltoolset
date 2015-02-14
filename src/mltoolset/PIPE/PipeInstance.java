@@ -33,13 +33,13 @@ public class PipeInstance
 
         selectedInstruction = selectInstructionIndexFromPptNode(pptNode);
 
-        if (selectedInstruction != -1)
+        if( selectedInstruction != parameters.grcIndex )
         {
             programNode.setInstruction(problemspecificDescriptor.getInstructionByIndex(selectedInstruction));
         }
 
         // special handling for grc
-        if (selectedInstruction == -1)
+        if( selectedInstruction == parameters.grcIndex )
         {
             if (pptNode.randomConstant > parameters.randomThreshold)
             {
@@ -120,7 +120,7 @@ public class PipeInstance
     {
         float propability;
         int i;
-
+        
         propability = pptNode.propabilityVector[programNode.getInstruction().getIndex()];
 
         for( i = 0; i < programNode.getChildrens().size(); i++ )
@@ -272,12 +272,25 @@ public class PipeInstance
             population.add(createdProgram);
         }
         
+        
+        
         // (2) population evaluation
         
         for( Program iterationProgram : population )
         {
             iterationProgram.fitness = problemspecificDescriptor.getFitnessOfProgram(iterationProgram);
         }
+        
+        System.out.println("");
+        System.out.println("candidates:");
+        
+        for( i = 0; i < parameters.populationSize; i++ )
+        {
+            System.out.println(population.get(i).fitness);
+            System.out.println(problemspecificDescriptor.getDescriptionOfProgramAsString(population.get(i)));
+        }
+        
+        System.out.println("---");
         
         bestProgram = population.get(0);
         for( Program iterationProgram : population )
@@ -301,6 +314,7 @@ public class PipeInstance
         }
         
         System.out.println(elitist.fitness);
+        System.out.println(problemspecificDescriptor.getDescriptionOfProgramAsString(elitist));
         
         // (3) learning from population
 

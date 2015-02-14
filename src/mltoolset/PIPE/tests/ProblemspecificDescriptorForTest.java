@@ -16,7 +16,7 @@ public class ProblemspecificDescriptorForTest implements mltoolset.PIPE.Problems
         instructionPrototypes.add(new BinaryInstruction(BinaryInstruction.EnumOperation.MUL, 2));
         instructionPrototypes.add(new BinaryInstruction(BinaryInstruction.EnumOperation.DIV, 3));
         instructionPrototypes.add(new TrigonometricInstruction(TrigonometricInstruction.EnumType.SIN, 4));
-        instructionPrototypes.add(new TerminalNumberConstantInstruction(0.0f, 5));
+        instructionPrototypes.add(new TerminalNumberConstantInstruction(0.0f, 5, new Random()));
         instructionPrototypes.add(new RealNumberInstruction(6));
     }
     
@@ -29,7 +29,7 @@ public class ProblemspecificDescriptorForTest implements mltoolset.PIPE.Problems
     @Override
     public Instruction createTerminalNode(float randomConstant)
     {
-        return new TerminalNumberConstantInstruction(randomConstant, 5);
+        return new TerminalNumberConstantInstruction(randomConstant, 5, new Random());
     }
 
     @Override
@@ -118,9 +118,50 @@ public class ProblemspecificDescriptorForTest implements mltoolset.PIPE.Problems
         }
     }
     
+    
+    @Override
+    public String getDescriptionOfProgramAsString(Program program)
+    {
+        return getDescriptionOfNodeAsString(program.entry);
+    }
+    
+    private String getDescriptionOfNodeAsString(mltoolset.PIPE.program.Node node)
+    {
+        int instructionIndex;
+        
+        instructionIndex = node.getInstruction().getIndex();
+        
+        switch( instructionIndex )
+        {
+            case 0:
+            return "(" + getDescriptionOfNodeAsString(node.getChildrens().get(0)) + " + " + getDescriptionOfNodeAsString(node.getChildrens().get(1)) + ")";
+            
+            case 1:
+            return "(" + getDescriptionOfNodeAsString(node.getChildrens().get(0)) + " - " + getDescriptionOfNodeAsString(node.getChildrens().get(1)) + ")";
+                
+            case 2:
+            return "(" + getDescriptionOfNodeAsString(node.getChildrens().get(0)) + " * " + getDescriptionOfNodeAsString(node.getChildrens().get(1)) + ")";
+            
+            case 3:
+            return "(" + getDescriptionOfNodeAsString(node.getChildrens().get(0)) + " / " + getDescriptionOfNodeAsString(node.getChildrens().get(1)) + ")";
+            
+            case 4:
+            return "sin(" + getDescriptionOfNodeAsString(node.getChildrens().get(0)) + ")";
+            
+            case 5:
+            return Float.toString(((TerminalNumberConstantInstruction)node.getInstruction()).getValue());
+            
+            case 6:
+            return "x";
+            
+            default:
+            throw new RuntimeException();
+        }
+    }
+    
     private float evaluationTrainingFunctionAt(float x)
     {
-        return (float)Math.sin(x);
+        return (float)Math.sin(x) + (float)Math.sin(x*0.8f);
     }
 
     @Override
@@ -143,7 +184,7 @@ public class ProblemspecificDescriptorForTest implements mltoolset.PIPE.Problems
         
         result.propabilityVector[4] = 0.2f;
         
-        result.propabilityVector[5] = 0.2f;
+        result.propabilityVector[5] = 0.4f;
         
         result.propabilityVector[6] = 0.3f;
         
@@ -154,4 +195,7 @@ public class ProblemspecificDescriptorForTest implements mltoolset.PIPE.Problems
     private Random random = new Random();
     
     private ArrayList<Instruction> instructionPrototypes = new ArrayList<>();
+
+    
+
 }

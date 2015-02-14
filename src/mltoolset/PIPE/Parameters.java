@@ -13,5 +13,6 @@ public class Parameters
     public float mutationRate;
     public float epsilon;
     public float randomThreshold;
+    public int grcIndex;
 
 }

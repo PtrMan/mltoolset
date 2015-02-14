@@ -16,13 +16,15 @@ public class SimpleMath
         ProblemspecificDescriptorForTest problemspecificDescriptor;
         
         parameters = new Parameters();
-        parameters.populationSize = 5;
+        parameters.populationSize = 1;
         parameters.learningRate = 0.3f;
         parameters.learningRateConstant = 0.1f; // like in paper
         parameters.mutationPropability = 0.08f;
         parameters.mutationRate = 0.1f;
         parameters.epsilon = 0.01f;
-        parameters.randomThreshold = 0.5f;
+        parameters.randomThreshold = 5.0f; // impossible high
+        
+        parameters.grcIndex = 5;
         
         problemspecificDescriptor = new ProblemspecificDescriptorForTest();
         

@@ -1,5 +1,7 @@
 package mltoolset.PIPE.program;
 
+import java.util.Random;
+
 /**
  *
  */
@@ -9,5 +11,5 @@ public interface Instruction
     
     public int getIndex();
     
-    public Instruction getClone();
+    public Instruction getInstance();
 }

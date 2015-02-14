@@ -1,11 +1,10 @@
 package mltoolset.PIPE.tests;
 
+import java.util.Random;
 import mltoolset.PIPE.program.Instruction;
 
 public class BinaryInstruction implements mltoolset.PIPE.program.Instruction
 {
-
-
     public enum EnumOperation
     {
         ADD,
@@ -33,7 +32,7 @@ public class BinaryInstruction implements mltoolset.PIPE.program.Instruction
     }
     
     @Override
-    public Instruction getClone()
+    public Instruction getInstance()
     {
         return new BinaryInstruction(operation, index);
     }

@@ -3,15 +3,10 @@
     <editor-bookmarks xmlns="http://www.netbeans.org/ns/editor-bookmarks/2" lastBookmarkId="0"/>
     <open-files xmlns="http://www.netbeans.org/ns/projectui-open-files/2">
         <group>
-            <file>file:/C:/Users/r0b3/Documents/NetBeansProjects/mltoolset/src/mltoolset/PIPE/program/Node.java</file>
-            <file>file:/C:/Users/r0b3/Documents/NetBeansProjects/mltoolset/src/mltoolset/MLToolset2.java</file>
-            <file>file:/C:/Users/r0b3/Documents/NetBeansProjects/mltoolset/src/mltoolset/PIPE/program/Program.java</file>
-            <file>file:/C:/Users/r0b3/Documents/NetBeansProjects/mltoolset/src/mltoolset/PIPE/tests/BinaryInstruction.java</file>
-            <file>file:/C:/Users/r0b3/Documents/NetBeansProjects/mltoolset/src/mltoolset/PIPE/tests/SimpleMath.java</file>
-            <file>file:/C:/Users/r0b3/Documents/NetBeansProjects/mltoolset/src/mltoolset/PIPE/tests/ProblemspecificDescriptorForTest.java</file>
-            <file>file:/C:/Users/r0b3/Documents/NetBeansProjects/mltoolset/src/mltoolset/Mltoolset.java</file>
-            <file>file:/C:/Users/r0b3/Documents/NetBeansProjects/mltoolset/src/mltoolset/PIPE/PipeInstance.java</file>
-            <file>file:/C:/Users/r0b3/Documents/NetBeansProjects/mltoolset/src/mltoolset/PIPE/tests/TerminalNumberConstantInstruction.java</file>
+            <file>file:/C:/Users/r0b3/Documents/GitHub/mltoolset/src/mltoolset/PIPE/PipeInstance.java</file>
+            <file>file:/C:/Users/r0b3/Documents/GitHub/mltoolset/src/mltoolset/PIPE/tests/ProblemspecificDescriptorForTest.java</file>
+            <file>file:/C:/Users/r0b3/Documents/GitHub/mltoolset/src/mltoolset/PIPE/tests/SimpleMath.java</file>
+            <file>file:/C:/Users/r0b3/Documents/GitHub/mltoolset/src/mltoolset/PIPE/ProblemspecificDescriptor.java</file>
         </group>
     </open-files>
 </project-private>

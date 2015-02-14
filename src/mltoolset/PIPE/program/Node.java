@@ -1,6 +1,7 @@
 package mltoolset.PIPE.program;
 
 import java.util.ArrayList;
+import mltoolset.misc.Assert;
 
 /**
  *
@@ -10,6 +11,8 @@ public class Node
 {
     public void setInstruction(Instruction instruction)
     {
+        Assert.Assert(instruction != null, "");
+        
         this.instruction = instruction;
     }
     
