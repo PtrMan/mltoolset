@@ -1,22 +1,33 @@
-//
-// Translated by CS2J (http://www.cs2j.com): 25.02.2015 04:30:45
-//
+// translated from C#
 
-package NeuralNetworks.Neuroids;
+package mltoolset.Neuroid;
+
+import java.util.ArrayList;
+import java.util.List;
+import mltoolset.Datastructures.DirectedGraph;
 
 /**
  * 
  * Idea of the neural network is from the book "Circuits of the mind"
  * 
  */
-public class Neuroid <Weighttype, ModeType>  
+public class Neuroid<Weighttype, ModeType>
 {
-    public static class NeuroidGraphElement   
+    public interface IWeighttypeHelper<Weighttype>
+    {
+        public Weighttype getValueForZero();
+        public boolean greater(Weighttype left, Weighttype right);
+        public boolean greaterEqual(Weighttype left, Weighttype right);
+        
+        public Weighttype add(Weighttype left, Weighttype right);
+    }
+    
+    public static class NeuroidGraphElement<Weighttype, ModeType>
     {
         public boolean isInputNeuroid = false;
         /** \brief indicates if this neuroid is an input neuroid, means that it gets its activation from outside and has no parent connections or theshold and so on */
         public Weighttype threshold;
-        public List<ModeType> mode = new List<ModeType>();
+        public List<ModeType> mode = new ArrayList<ModeType>();
         public int state = 0;
         // startstate
         public boolean firing = false;
@@ -26,11 +37,14 @@ public class Neuroid <Weighttype, ModeType>
         public int remainingLatency = 0;
         /** \brief as long as this is > 0 its mode nor its weights can be changed */
         public Weighttype sumOfIncommingWeights;
-        public boolean isStimulated() throws Exception {
-            return (dynamic)sumOfIncommingWeights >= threshold;
+        
+        public boolean isStimulated(IWeighttypeHelper<Weighttype> weighttypeHelper)
+        {
+            return weighttypeHelper.greaterEqual(sumOfIncommingWeights, threshold);
         }
 
-        public void updateFiring() throws Exception {
+        public void updateFiring()
+        {
             firing = nextFiring;
             nextFiring = false;
         }
@@ -42,53 +56,61 @@ public class Neuroid <Weighttype, ModeType>
         public State() {
         }
 
-        public int latency = new int();
+        public int latency;
     }
 
-    public interface IUpdate   
+    public interface IUpdate<Weighttype, ModeType>
     {
-        void calculateUpdateFunction(NeuroidGraphElement neuroid, List<ModeType> updatedMode, List<Weighttype> updatedWeights) throws Exception ;
+        void calculateUpdateFunction(NeuroidGraphElement neuroid, List<ModeType> updatedMode, List<Weighttype> updatedWeights);
 
-        void initialize(NeuroidGraphElement neuroid, List<int> parentIndices, List<ModeType> updatedMode, List<Weighttype> updatedWeights) throws Exception ;
+        void initialize(NeuroidGraphElement neuroid, List<Integer> parentIndices, List<ModeType> updatedMode, List<Weighttype> updatedWeights);
     
     }
-
-    public void initialize() throws Exception {
-        int neuronI = new int();
-        for (neuronI = 0;neuronI < neuroidsGraph.elements.Count;neuronI++)
+    
+    public Neuroid(IWeighttypeHelper<Weighttype> weighttypeHelper)
+    {
+        this.weighttypeHelper = weighttypeHelper;
+    }
+    
+    public void initialize()
+    {
+        int neuronI;
+        for (neuronI = 0;neuronI < neuroidsGraph.elements.size();neuronI++)
         {
-            List<ModeType> modes = new List<ModeType>();
-            List<Weighttype> weights = new List<Weighttype>();
-            boolean thresholdValid = new boolean();
+            List<ModeType> modes = new ArrayList<ModeType>();
+            List<Weighttype> weights = new ArrayList<Weighttype>();
+            boolean thresholdValid;
             // a input neuroid doesn't have to be initialized
-            if (neuroidsGraph.elements[neuronI].content.isInputNeuroid)
+            if( neuroidsGraph.elements.get(neuronI).content.isInputNeuroid )
             {
                 continue;
             }
              
-            modes = new List<ModeType>();
-            weights = new List<Weighttype>();
-            update.initialize(neuroidsGraph.elements[neuronI].content, neuroidsGraph.elements[neuronI].parentIndices, modes, weights);
-            neuroidsGraph.elements[neuronI].content.mode = modes;
+            modes = new ArrayList<ModeType>();
+            weights = new ArrayList<Weighttype>();
+            update.initialize(neuroidsGraph.elements.get(neuronI).content, neuroidsGraph.elements.get(neuronI).parentIndices, modes, weights);
+            neuroidsGraph.elements.get(neuronI).content.mode = modes;
             //neuroidsGraph.elements[neuronI].content.weights = weights;
-            thresholdValid = (dynamic)neuroidsGraph.elements[neuronI].content.threshold > (Weighttype)0.0;
-            System.Diagnostics.Debug.Assert(thresholdValid, "threshold must be greater than 0.0!");
+            thresholdValid = weighttypeHelper.greater((Weighttype) neuroidsGraph.elements.get(neuronI).content.threshold, weighttypeHelper.getValueForZero());
+            mltoolset.misc.Assert.Assert(thresholdValid, "threshold must be greater than 0.0!");
         }
     }
 
     // just for debugging
-    public void debugAllNeurons() throws Exception {
-        int neuronI = new int();
-        System.Console.WriteLine("===");
-        for (neuronI = 0;neuronI < neuroidsGraph.elements.Count;neuronI++)
+    public void debugAllNeurons()
+    {
+        int neuronI;
+        System.out.format("===");
+        for (neuronI = 0;neuronI < neuroidsGraph.elements.size();neuronI++)
         {
             NeuroidGraphElement neuroidGraphElement;
-            neuroidGraphElement = neuroidsGraph.elements[neuronI].content;
-            System.Console.WriteLine("neuron {0} isFiring {1}", neuronI, neuroidGraphElement.firing);
+            neuroidGraphElement = neuroidsGraph.elements.get(neuronI).content;
+            System.out.format("neuron {0} isFiring {1}", neuronI, neuroidGraphElement.firing);
         }
     }
 
-    public void timestep() throws Exception {
+    public void timestep()
+    {
         /*
                     updateFiringForInputNeuroids();
                     updateIncommingWeigthsForAllNeuroids();
@@ -101,56 +123,61 @@ public class Neuroid <Weighttype, ModeType>
         decreaseLatency();
     }
 
-    public void addConnection(int a, int b, Weighttype weight) throws Exception {
-        System.Diagnostics.Debug.Assert(a >= 0);
-        System.Diagnostics.Debug.Assert(b >= 0);
-        neuroidsGraph.elements[a].childIndices.Add(b);
-        neuroidsGraph.elements[a].childWeights.Add(weight);
-        neuroidsGraph.elements[b].parentIndices.Add(a);
+    public void addConnection(int a, int b, Weighttype weight)
+    {
+        mltoolset.misc.Assert.Assert(a >= 0, "");
+        mltoolset.misc.Assert.Assert(b >= 0, "");
+        neuroidsGraph.elements.get(a).childIndices.add(b);
+        neuroidsGraph.elements.get(a).childWeights.add(weight);
+        neuroidsGraph.elements.get(b).parentIndices.add(a);
     }
 
     //neuroidsGraph.elements[a].content.weights.Add(weight);
-    public void addTwoWayConnection(int a, int b, Weighttype weight) throws Exception {
+    public void addTwoWayConnection(int a, int b, Weighttype weight)
+    {
         addConnection(a,b,weight);
         addConnection(b,a,weight);
     }
 
-    public boolean[] getActiviationOfNeurons() throws Exception {
-        boolean[] activationResult = new boolean[]();
-        int neuronI = new int();
-        activationResult = new boolean[neuroidsGraph.elements.Count];
-        for (neuronI = 0;neuronI < neuroidsGraph.elements.Count;neuronI++)
+    public boolean[] getActiviationOfNeurons()
+    {
+        boolean[] activationResult;
+        int neuronI;
+        activationResult = new boolean[neuroidsGraph.elements.size()];
+        
+        for (neuronI = 0;neuronI < neuroidsGraph.elements.size();neuronI++)
         {
-            activationResult[neuronI] = neuroidsGraph.elements[neuronI].content.firing;
+            activationResult[neuronI] = neuroidsGraph.elements.get(neuronI).content.firing;
         }
         return activationResult;
     }
 
     /** \brief reallocates the neurons
-             * 
-             * the neuronCount includes the count of the input neurons
-             * 
-             */
-    public void allocateNeurons(int neuronCount, int inputCount) throws Exception {
-        int neuronI = new int();
+     *
+     * the neuronCount includes the count of the input neurons
+     *
+     */
+    public void allocateNeurons(int neuronCount, int inputCount)
+    {
+        int neuronI;
         allocatedInputNeuroids = inputCount;
-        neuroidsGraph.elements.Clear();
+        neuroidsGraph.elements.clear();
         for (neuronI = 0;neuronI < neuronCount;neuronI++)
         {
-            neuroidsGraph.elements.Add(new Datastructures.DirectedGraph<NeuroidGraphElement, Weighttype>.Element(new NeuroidGraphElement()));
+            neuroidsGraph.elements.add(new DirectedGraph.Element<NeuroidGraphElement, Weighttype>(new NeuroidGraphElement()));
         }
         for (neuronI = 0;neuronI < inputCount;neuronI++)
         {
-            neuroidsGraph.elements[neuronI].content.isInputNeuroid = true;
+            neuroidsGraph.elements.get(neuronI).content.isInputNeuroid = true;
         }
     }
 
-    private void updateNeuronStates() throws Exception {
-        for (Object __dummyForeachVar0 : neuroidsGraph.elements)
+    private void updateNeuronStates()
+    {
+        for( DirectedGraph.Element<NeuroidGraphElement, Weighttype> iterationNeuron : neuroidsGraph.elements )
         {
-            Datastructures.DirectedGraph<NeuroidGraphElement, Weighttype>.Element iterationNeuron = (Datastructures.DirectedGraph<NeuroidGraphElement, Weighttype>.Element)__dummyForeachVar0;
-            List<ModeType> updatedMode = new List<ModeType>();
-            List<Weighttype> updatedWeights = new List<Weighttype>();
+            List<ModeType> updatedMode = new ArrayList<ModeType>();
+            List<Weighttype> updatedWeights = new ArrayList<Weighttype>();
             // input neuron doesn't have to be updated
             if (iterationNeuron.content.isInputNeuroid)
             {
@@ -171,30 +198,33 @@ public class Neuroid <Weighttype, ModeType>
     }
 
     //iterationNeuron.content.weights = updatedWeights;
-    private void updateIncommingWeigthsForAllNeuroids() throws Exception {
-        int iterationNeuronI = new int();
-        for (iterationNeuronI = 0;iterationNeuronI < neuroidsGraph.elements.Count;iterationNeuronI++)
+    private void updateIncommingWeigthsForAllNeuroids()
+    {
+        int iterationNeuronI;
+        
+        // add up the weights of the incomming edges
+        for (iterationNeuronI = 0;iterationNeuronI < neuroidsGraph.elements.size();iterationNeuronI++)
         {
-            // add up the weights of the incomming edges
-            Datastructures.DirectedGraph<NeuroidGraphElement, Weighttype>.Element iterationNeuron = new Datastructures.DirectedGraph<NeuroidGraphElement, Weighttype>.Element();
+            DirectedGraph.Element<NeuroidGraphElement, Weighttype> iterationNeuron;
             Weighttype sumOfWeightsOfThisNeuron;
-            iterationNeuron = neuroidsGraph.elements[iterationNeuronI];
+            
+            iterationNeuron = neuroidsGraph.elements.get(iterationNeuronI);
+            
             // activation of a input neuron doesn't have to be calculated
             if (iterationNeuron.content.isInputNeuroid)
             {
                 continue;
             }
             
-            sumOfWeightsOfThisNeuron = (Weighttype)0.0;
-            for (Object __dummyForeachVar1 : iterationNeuron.parentIndices)
+            sumOfWeightsOfThisNeuron = weighttypeHelper.getValueForZero();
+            for( int iterationParentIndex : iterationNeuron.parentIndices )
             {
-                int iterationParentIndex = (Integer)__dummyForeachVar1;
-                boolean activation = new boolean();
-                activation = neuroidsGraph.elements[iterationParentIndex].content.firing;
+                boolean activation;
+                activation = neuroidsGraph.elements.get(iterationParentIndex).content.firing;
                 if (activation)
                 {
                     Weighttype edgeWeight = neuroidsGraph.getEdgeWeight(iterationParentIndex, iterationNeuronI);
-                    sumOfWeightsOfThisNeuron += edgeWeight;
+                    sumOfWeightsOfThisNeuron = weighttypeHelper.add(sumOfWeightsOfThisNeuron, edgeWeight);
                 }
                  
             }
@@ -202,42 +232,43 @@ public class Neuroid <Weighttype, ModeType>
         }
     }
 
-    private void updateFiringForAllNeuroids() throws Exception {
-        for (Object __dummyForeachVar2 : neuroidsGraph.elements)
+    private void updateFiringForAllNeuroids()
+    {
+        for( DirectedGraph.Element<NeuroidGraphElement, Weighttype> iterationNeuron : neuroidsGraph.elements )
         {
-            Datastructures.DirectedGraph<NeuroidGraphElement, Weighttype>.Element iterationNeuron = (Datastructures.DirectedGraph<NeuroidGraphElement, Weighttype>.Element)__dummyForeachVar2;
             iterationNeuron.content.updateFiring();
         }
     }
 
-    private void updateFiringForInputNeuroids() throws Exception {
-        int inputNeuroidI = new int();
-        System.Diagnostics.Debug.Assert(allocatedInputNeuroids == input.Length);
-        for (inputNeuroidI = 0;inputNeuroidI < input.Length;inputNeuroidI++)
+    private void updateFiringForInputNeuroids()
+    {
+        int inputNeuroidI;
+        mltoolset.misc.Assert.Assert(allocatedInputNeuroids == input.length, "");
+        
+        for (inputNeuroidI = 0;inputNeuroidI < input.length;inputNeuroidI++)
         {
-            neuroidsGraph.elements[inputNeuroidI].content.nextFiring = input[inputNeuroidI];
+            neuroidsGraph.elements.get(inputNeuroidI).content.nextFiring = input[inputNeuroidI];
         }
     }
 
-    private void decreaseLatency() throws Exception {
-        for (Object __dummyForeachVar3 : neuroidsGraph.elements)
+    private void decreaseLatency()
+    {
+        for( DirectedGraph.Element<NeuroidGraphElement, Weighttype> iterationNeuron : neuroidsGraph.elements )
         {
-            Datastructures.DirectedGraph<NeuroidGraphElement, Weighttype>.Element iterationNeuron = (Datastructures.DirectedGraph<NeuroidGraphElement, Weighttype>.Element)__dummyForeachVar3;
-            if (iterationNeuron.content.remainingLatency > 0)
+            if( iterationNeuron.content.remainingLatency > 0 )
             {
                 iterationNeuron.content.remainingLatency--;
             }
-             
         }
     }
 
     // input from outside
     // must be set and resized from outside
-    public boolean[] input = new boolean[]();
+    public boolean[] input;
     public IUpdate update;
-    public State[] stateInformations = new State[]();
-    private Datastructures.DirectedGraph<NeuroidGraphElement, Weighttype> neuroidsGraph = new Datastructures.DirectedGraph<NeuroidGraphElement, Weighttype>();
-    private int allocatedInputNeuroids = new int();
+    public State[] stateInformations;
+    private DirectedGraph<NeuroidGraphElement, Weighttype> neuroidsGraph = new DirectedGraph<NeuroidGraphElement, Weighttype>();
+    private int allocatedInputNeuroids;
+    
+    private IWeighttypeHelper<Weighttype> weighttypeHelper;
 }
-
-
