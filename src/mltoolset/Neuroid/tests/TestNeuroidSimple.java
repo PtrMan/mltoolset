@@ -72,7 +72,7 @@ public class TestNeuroidSimple {
 
     public static void main(String[] args) {
         final int latencyAfterActivation = 3;
-        final float randomFiringPropability =.1f;
+        final float randomFiringPropability =.0f;
 
 
         Neuroid<Float, Integer> neuroid = new Neuroid<>(new WeighttypeHelper());
@@ -81,19 +81,27 @@ public class TestNeuroidSimple {
         neuroid.allocateNeurons(6, 3);
         neuroid.input = new boolean[3];
 
+
         neuroid.getGraph().elements.get(3).content.threshold = new Float(0.5f);
         neuroid.getGraph().elements.get(4).content.threshold = new Float(0.5f);
         neuroid.getGraph().elements.get(5).content.threshold = new Float(0.5f);
 
-        neuroid.addTwoWayConnection(3, 4, 0.9f);
+        neuroid.addTwoWayConnection(2, 3, 0.9f);
         neuroid.addTwoWayConnection(4, 5, 0.9f);
 
         neuroid.initialize();
 
-        for( int timestep = 0; timestep < 100; timestep++ ) {
+        for( int timestep = 0; timestep < 5; timestep++ ) {
+            System.out.println("=A=A=A=A");
+
             neuroid.debugAllNeurons();
 
+            // stimulate
+            neuroid.input[2] = true;
+
             neuroid.timestep();
+
+            neuroid.debugAllNeurons();
 
         }
 

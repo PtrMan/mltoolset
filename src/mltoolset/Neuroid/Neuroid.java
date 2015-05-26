@@ -128,10 +128,6 @@ public class Neuroid<Weighttype, ModeType> {
     }
 
     public void timestep() {
-        /*
-                    updateFiringForInputNeuroids();
-                    updateIncommingWeigthsForAllNeuroids();
-                     */
         // order is important, we first update input and then all neuroids
         updateFiringForInputNeuroids();
         updateFiringForAllNeuroids();
@@ -144,7 +140,10 @@ public class Neuroid<Weighttype, ModeType> {
         mltoolset.misc.Assert.Assert(from >= 0, "");
         mltoolset.misc.Assert.Assert(to >= 0, "");
 
-        neuroidsGraph.weights.add(new NeuroidGraph.WeightTuple<>(from, to, (Weighttype)weight));
+        neuroidsGraph.weights.add(new NeuroidGraph.WeightTuple<>(from, to, (Weighttype) weight));
+
+        // needed for acceleration of the update
+        neuroidsGraph.graph.elements.get(to).parentIndices.add(from);
     }
 
     //neuroidsGraph.elements[a].content.weights.Add(weight);
@@ -154,11 +153,9 @@ public class Neuroid<Weighttype, ModeType> {
     }
 
     public boolean[] getActiviationOfNeurons() {
-        boolean[] activationResult;
-        int neuronI;
-        activationResult = new boolean[neuroidsGraph.graph.elements.size()];
+        boolean[] activationResult = new boolean[neuroidsGraph.graph.elements.size()];
         
-        for (neuronI = 0;neuronI < neuroidsGraph.graph.elements.size();neuronI++) {
+        for( int neuronI = 0; neuronI < neuroidsGraph.graph.elements.size(); neuronI++ ) {
             activationResult[neuronI] = neuroidsGraph.graph.elements.get(neuronI).content.firing;
         }
         return activationResult;
@@ -207,24 +204,18 @@ public class Neuroid<Weighttype, ModeType> {
 
     //iterationNeuron.content.weights = updatedWeights;
     private void updateIncommingWeigthsForAllNeuroids() {
-        int iterationNeuronI;
-        
         // add up the weights of the incomming edges
-        for (iterationNeuronI = 0;iterationNeuronI < neuroidsGraph.graph.elements.size();iterationNeuronI++) {
-            NotDirectedGraph.Element<NeuroidGraphElement> iterationNeuron;
-            Weighttype sumOfWeightsOfThisNeuron;
-            
-            iterationNeuron = neuroidsGraph.graph.elements.get(iterationNeuronI);
+        for( int iterationNeuronI = 0; iterationNeuronI < neuroidsGraph.graph.elements.size(); iterationNeuronI++ ) {
+            NotDirectedGraph.Element<NeuroidGraphElement> iterationNeuron = neuroidsGraph.graph.elements.get(iterationNeuronI);
             
             // activation of a input neuron doesn't have to be calculated
             if (iterationNeuron.content.isInputNeuroid) {
                 continue;
             }
-            
-            sumOfWeightsOfThisNeuron = weighttypeHelper.getValueForZero();
+
+            Weighttype sumOfWeightsOfThisNeuron = weighttypeHelper.getValueForZero();
             for( int iterationParentIndex : iterationNeuron.parentIndices ) {
-                boolean activation;
-                activation = neuroidsGraph.graph.elements.get(iterationParentIndex).content.firing;
+                final boolean activation = neuroidsGraph.graph.elements.get(iterationParentIndex).content.firing;
                 if (activation) {
                     System.out.println("iterationParentIndex " + Integer.toString(iterationParentIndex));
                     System.out.println("iterationNeuronI " + Integer.toString(iterationNeuronI));
@@ -235,6 +226,7 @@ public class Neuroid<Weighttype, ModeType> {
                 }
                  
             }
+
             iterationNeuron.content.sumOfIncommingWeights = sumOfWeightsOfThisNeuron;
         }
     }
