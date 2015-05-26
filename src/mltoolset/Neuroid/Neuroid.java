@@ -217,10 +217,6 @@ public class Neuroid<Weighttype, ModeType> {
             for( int iterationParentIndex : iterationNeuron.parentIndices ) {
                 final boolean activation = neuroidsGraph.graph.elements.get(iterationParentIndex).content.firing;
                 if (activation) {
-                    System.out.println("iterationParentIndex " + Integer.toString(iterationParentIndex));
-                    System.out.println("iterationNeuronI " + Integer.toString(iterationNeuronI));
-                    System.out.println();
-
                     Weighttype edgeWeight = neuroidsGraph.getEdgeWeight(iterationParentIndex, iterationNeuronI);
                     sumOfWeightsOfThisNeuron = weighttypeHelper.add(sumOfWeightsOfThisNeuron, edgeWeight);
                 }
