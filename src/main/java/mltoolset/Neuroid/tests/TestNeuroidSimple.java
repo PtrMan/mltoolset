@@ -9,36 +9,7 @@ import java.util.Random;
  * Simple test case for standard neuroid impl.
  */
 public class TestNeuroidSimple {
-    private static class WeighttypeHelper implements Neuroid.IWeighttypeHelper {
-        @Override
-        public Object getValueForZero() {
-            return 0.0f;
-        }
 
-        @Override
-        public boolean greater(Object left, Object right) {
-            final float leftAsFloat = (Float)left;
-            final float rightAsFloat = (Float)right;
-
-            return leftAsFloat > rightAsFloat;
-        }
-
-        @Override
-        public boolean greaterEqual(Object left, Object right) {
-            final float leftAsFloat = (Float)left;
-            final float rightAsFloat = (Float)right;
-
-            return leftAsFloat >= rightAsFloat;
-        }
-
-        @Override
-        public Object add(Object left, Object right) {
-            final float leftAsFloat = (Float)left;
-            final float rightAsFloat = (Float)right;
-
-            return new Float(leftAsFloat + rightAsFloat);
-        }
-    }
 
     private static class Update implements Neuroid.IUpdate<Float, Integer> {
         private final int latencyAfterActivation;
@@ -50,7 +21,7 @@ public class TestNeuroidSimple {
         }
 
         @Override
-        public void calculateUpdateFunction(Neuroid.NeuroidGraphElement neuroid, List<Integer> updatedMode, List<Float> updatedWeights, Neuroid.IWeighttypeHelper<Float> weighttypeHelper) {
+        public void calculateUpdateFunction(int neuronIndex, Neuroid.NeuroidGraphElement neuroid, List<Integer> updatedMode, List<Float> updatedWeights, Neuroid.IWeighttypeHelper<Float> weighttypeHelper) {
             neuroid.nextFiring = neuroid.isStimulated(weighttypeHelper);
 
             if (neuroid.nextFiring) {
@@ -75,7 +46,7 @@ public class TestNeuroidSimple {
         final float randomFiringPropability =.0f;
 
 
-        Neuroid<Float, Integer> neuroid = new Neuroid<>(new WeighttypeHelper());
+        Neuroid<Float, Integer> neuroid = new Neuroid<>(new Neuroid.FloatWeighttypeHelper());
         neuroid.update = new Update(latencyAfterActivation, randomFiringPropability);
 
         neuroid.allocateNeurons(6, 3);

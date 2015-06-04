@@ -5,6 +5,7 @@ package mltoolset.Neuroid;
 import mltoolset.Datastructures.NotDirectedGraph;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -13,11 +14,42 @@ import java.util.List;
  * 
  */
 public class Neuroid<Weighttype, ModeType> {
+    public static class FloatWeighttypeHelper implements Neuroid.IWeighttypeHelper {
+        @Override
+        public Object getValueForZero() {
+            return 0.0f;
+        }
+
+        @Override
+        public boolean greater(Object left, Object right) {
+            final float leftAsFloat = (Float)left;
+            final float rightAsFloat = (Float)right;
+
+            return leftAsFloat > rightAsFloat;
+        }
+
+        @Override
+        public boolean greaterEqual(Object left, Object right) {
+            final float leftAsFloat = (Float)left;
+            final float rightAsFloat = (Float)right;
+
+            return leftAsFloat >= rightAsFloat;
+        }
+
+        @Override
+        public Object add(Object left, Object right) {
+            final float leftAsFloat = (Float)left;
+            final float rightAsFloat = (Float)right;
+
+            return new Float(leftAsFloat + rightAsFloat);
+        }
+    }
+
     public interface IWeighttypeHelper<Weighttype> {
         public Weighttype getValueForZero();
         public boolean greater(Weighttype left, Weighttype right);
         public boolean greaterEqual(Weighttype left, Weighttype right);
-        
+
         public Weighttype add(Weighttype left, Weighttype right);
     }
 
@@ -86,7 +118,7 @@ public class Neuroid<Weighttype, ModeType> {
     }
 
     public interface IUpdate<Weighttype, ModeType> {
-        void calculateUpdateFunction(NeuroidGraphElement neuroid, List<ModeType> updatedMode, List<Weighttype> updatedWeights, IWeighttypeHelper<Weighttype> weighttypeHelper);
+        void calculateUpdateFunction(int neuronIndex, NeuroidGraphElement neuroid, List<ModeType> updatedMode, List<Weighttype> updatedWeights, IWeighttypeHelper<Weighttype> weighttypeHelper);
 
         void initialize(NeuroidGraphElement neuroid, List<Integer> parentIndices, List<ModeType> updatedMode, List<Weighttype> updatedWeights);
     
@@ -136,20 +168,18 @@ public class Neuroid<Weighttype, ModeType> {
         decreaseLatency();
     }
 
-    public void addConnection(int from, int to, Weighttype weight) {
-        mltoolset.misc.Assert.Assert(from >= 0, "");
-        mltoolset.misc.Assert.Assert(to >= 0, "");
+    public void addConnections(List<NeuroidGraph.WeightTuple<Weighttype>> connections) {
+        neuroidsGraph.weights.addAll(connections);
 
-        neuroidsGraph.weights.add(new NeuroidGraph.WeightTuple<>(from, to, (Weighttype) weight));
-
-        // needed for acceleration of the update
-        neuroidsGraph.graph.elements.get(to).parentIndices.add(from);
+        for( final NeuroidGraph.WeightTuple<Weighttype> iterationConnection : connections ) {
+            // needed for acceleration of the update
+            neuroidsGraph.graph.elements.get(iterationConnection.to).parentIndices.add(iterationConnection.from);
+        }
     }
 
-    //neuroidsGraph.elements[a].content.weights.Add(weight);
     public void addTwoWayConnection(int a, int b, Weighttype weight) {
-        addConnection(a, b, weight);
-        addConnection(b, a, weight);
+        addConnections(Arrays.asList(new NeuroidGraph.WeightTuple<Weighttype>(a, b, weight)));
+        addConnections(Arrays.asList(new NeuroidGraph.WeightTuple<Weighttype>(b, a, weight)));
     }
 
     public boolean[] getActiviationOfNeurons() {
@@ -182,6 +212,8 @@ public class Neuroid<Weighttype, ModeType> {
     }
 
     private void updateNeuronStates() {
+        int neuronIndex = 0;
+
         for( NotDirectedGraph.Element<NeuroidGraphElement> iterationNeuron : neuroidsGraph.graph.elements ) {
             List<ModeType> updatedMode = new ArrayList<ModeType>();
             List<Weighttype> updatedWeights = new ArrayList<Weighttype>();
@@ -197,8 +229,10 @@ public class Neuroid<Weighttype, ModeType> {
              
             updatedMode = null;
             updatedWeights = null;
-            update.calculateUpdateFunction(iterationNeuron.content, updatedMode, updatedWeights, weighttypeHelper);
+            update.calculateUpdateFunction(neuronIndex, iterationNeuron.content, updatedMode, updatedWeights, weighttypeHelper);
             iterationNeuron.content.mode = updatedMode;
+
+            neuronIndex++;
         }
     }
 
