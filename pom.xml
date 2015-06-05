@@ -8,10 +8,11 @@
     <artifactId>mltoolset</artifactId>
     <version>1.0-SNAPSHOT</version>
 
-
+    <dependencies>
     <dependency>
         <groupId>org.uncommons.watchmaker</groupId>
         <artifactId>watchmaker-framework</artifactId>
         <version>0.7.1</version>
     </dependency>
+    </dependencies>
 </project>
