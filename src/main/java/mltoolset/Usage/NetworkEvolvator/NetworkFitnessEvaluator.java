@@ -40,14 +40,15 @@ public class NetworkFitnessEvaluator implements FitnessEvaluator<NetworkGeneticE
     }
 
     public double getFitness(NetworkGeneticExpression networkGeneticExpression, List<? extends NetworkGeneticExpression> list) {
-        final float CONNECTION_PENELIZE = 0.05f; // how much does a connection cost?
+        final float CONNECTION_PENELIZE = 0.08f; // how much does a connection cost?
+        final float NEURON_PENELIZE = 0.8f; // how much does a neuron cost?
 
         final int numberOfInputNeurons = 1;
 
         final int latencyAfterActivation = 2;
         final float randomFiringPropability = 0.0f;
 
-        float fitness = 50.0f;
+        float fitness = 5000.0f;
 
         // evaluate how many times the output neuron (neuron 0) got stimulated
 
@@ -66,10 +67,10 @@ public class NetworkFitnessEvaluator implements FitnessEvaluator<NetworkGeneticE
         neuroid.initialize();
 
         // simulate network
-        for( int timestep = 0; timestep < 50; timestep++ ) {
+        for( int timestep = 0; timestep < 80; timestep++ ) {
             // stimulate
 
-            if( timestep < 5 ) {
+            if( (timestep % 5) == 0 ) {
                 neuroid.input[0] = true;
             }
 
@@ -82,9 +83,27 @@ public class NetworkFitnessEvaluator implements FitnessEvaluator<NetworkGeneticE
             if( neuronActivation[0] ) {
                 //fitness += 10.0f;
             }
-            if( neuronActivation[1 + (timestep % 5)] ) {
-                fitness += 100.0f;
+
+
+
+            for( int timestepNeuron = 0; timestepNeuron < 5; timestepNeuron++ ) {
+                final float fitnessDelta;
+
+                if( timestepNeuron == timestep ) {
+                    fitnessDelta = 100.0f;
+                }
+                else {
+                    fitnessDelta = -1.0f;
+                }
+
+                if( neuronActivation[1 + timestepNeuron] ) {
+                    fitness += fitnessDelta;
+                }
             }
+
+            //if( neuronActivation[1 + (timestep % 5)] ) {
+            //    fitness += 100.0f;
+            //}
             //if( neuronActivation[2] ) {
             //    fitness += 10.0f;
             //}
@@ -95,7 +114,7 @@ public class NetworkFitnessEvaluator implements FitnessEvaluator<NetworkGeneticE
 
         fitness -= ((float)networkGeneticExpression.connectionsWithWeights.size() * CONNECTION_PENELIZE);
 
-        // TODO< penelize for active neurons? >
+        fitness -= ((float)getNumberOfActiveNeurons(networkGeneticExpression) * NEURON_PENELIZE);
 
         fitness = max(fitness, 0.0f);
 
@@ -104,5 +123,19 @@ public class NetworkFitnessEvaluator implements FitnessEvaluator<NetworkGeneticE
 
     public boolean isNatural() {
         return true;
+    }
+
+    private static int getNumberOfActiveNeurons(NetworkGeneticExpression networkGeneticExpression) {
+        final boolean[] neuronsActivate = networkGeneticExpression.neuronCandidatesActive;
+
+        int activeNeurons = 0;
+
+        for( int i = 0; i < neuronsActivate.length; i++ ) {
+            if( neuronsActivate[i] ) {
+                activeNeurons++;
+            }
+        }
+
+        return activeNeurons;
     }
 }

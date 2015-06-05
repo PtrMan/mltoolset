@@ -32,7 +32,7 @@ public class NetworkEvolvator {
             }
         });
 
-        NetworkGeneticExpression result = engine.evolve(500, 5, new GenerationCount(5000));
+        NetworkGeneticExpression result = engine.evolve(500, 3, new GenerationCount(50000));
         //System.out.println(result);
     }
 }
