@@ -1,6 +1,4 @@
-package ptrman.mltoolset.Neuroid.tests;
-
-import ptrman.mltoolset.Neuroid.Neuroid;
+package ptrman.mltoolset.Neuroid;
 
 import java.util.List;
 import java.util.Random;
@@ -9,8 +7,6 @@ import java.util.Random;
  * Simple test case for standard neuroid impl.
  */
 public class TestNeuroidSimple {
-
-
     private static class Update implements Neuroid.IUpdate<Float, Integer> {
         private final int latencyAfterActivation;
         private final float randomFiringPropability;
@@ -21,7 +17,7 @@ public class TestNeuroidSimple {
         }
 
         @Override
-        public void calculateUpdateFunction(Neuroid.NeuroidGraph.NeuronNode<Float, Integer> neuroid, Neuroid.IWeighttypeHelper<Float> weighttypeHelper) {
+        public void calculateUpdateFunction(Neuroid.NeuroidGraph<Float, Integer> graph, Neuroid.NeuroidGraph.NeuronNode<Float, Integer> neuroid, Neuroid.IWeighttypeHelper<Float> weighttypeHelper) {
             neuroid.graphElement.nextFiring = neuroid.graphElement.isStimulated(weighttypeHelper);
 
             if (neuroid.graphElement.nextFiring) {
@@ -47,12 +43,10 @@ public class TestNeuroidSimple {
         final int latencyAfterActivation = 3;
         final float randomFiringPropability =.0f;
 
-
         Neuroid<Float, Integer> neuroid = new Neuroid<>(new Neuroid.FloatWeighttypeHelper());
         neuroid.update = new Update(latencyAfterActivation, randomFiringPropability);
 
         neuroid.allocateNeurons(3, 3, 0);
-        neuroid.input = new boolean[3];
 
         neuroid.getGraph().neuronNodes[0].graphElement.threshold = 0.5f;
         neuroid.getGraph().neuronNodes[1].graphElement.threshold = 0.5f;
@@ -69,7 +63,7 @@ public class TestNeuroidSimple {
             neuroid.debugAllNeurons();
 
             // stimulate
-            neuroid.input[2] = true;
+            neuroid.setActivationOfInputNeuron(2, true);
 
             neuroid.timestep();
 
