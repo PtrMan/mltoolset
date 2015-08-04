@@ -61,8 +61,7 @@ public class ProblemspecificDescriptorForTest implements ptrman.mltoolset.PIPE.P
         
         mse = 0.0f;
         
-        for( x = -1.0f; x < 1.0f; x+=0.05f )
-        {
+        for( x = -1.0f; x < 1.0f; x+=0.05f ) {
             float diff;
             
             diff = evaluationTrainingFunctionAt(x) - evaluateProgramAt(program, x);
@@ -147,20 +146,17 @@ public class ProblemspecificDescriptorForTest implements ptrman.mltoolset.PIPE.P
         }
     }
     
-    private float evaluationTrainingFunctionAt(float x)
-    {
+    private float evaluationTrainingFunctionAt(float x) {
         return (float)Math.sin(x) + (float)Math.sin(x*0.8f);
     }
 
     @Override
-    public float getNumberOfInstructions()
-    {
+    public float getNumberOfInstructions() {
         return instructionPrototypes.size();
     }
 
     @Override
-    public Node createPptNode()
-    {
+    public Node createPptNode() {
         Node result;
         
         result = new Node();

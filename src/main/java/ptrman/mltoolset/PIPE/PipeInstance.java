@@ -18,8 +18,7 @@ public class PipeInstance {
         
         rootnode = problemspecificDescriptor.createPptNode();
         
-        for(;;)
-        {
+        for(;;) {
             generationBasedLearningIteration();
             
             int x = 0;
@@ -27,53 +26,43 @@ public class PipeInstance {
     }
     
     
-    private void createProgramNodeFromPptNode(ptrman.mltoolset.PIPE.PropabilisticPrototypeTree.Node pptNode, ptrman.mltoolset.PIPE.program.Node programNode)
-    {
+    private void createProgramNodeFromPptNode(ptrman.mltoolset.PIPE.PropabilisticPrototypeTree.Node pptNode, ptrman.mltoolset.PIPE.program.Node programNode) {
         int selectedInstruction;
 
         selectedInstruction = selectInstructionIndexFromPptNode(pptNode);
 
-        if( selectedInstruction != parameters.grcIndex )
-        {
+        if( selectedInstruction != parameters.grcIndex ) {
             programNode.setInstruction(problemspecificDescriptor.getInstructionByIndex(selectedInstruction));
         }
 
         // special handling for grc
-        if( selectedInstruction == parameters.grcIndex )
-        {
-            if (pptNode.randomConstant > parameters.randomThreshold)
-            {
+        if( selectedInstruction == parameters.grcIndex ) {
+            if (pptNode.randomConstant > parameters.randomThreshold) {
                 programNode.setInstruction(problemspecificDescriptor.createTerminalNode(pptNode.randomConstant));
             }
-            else
-            {
+            else {
                 programNode.setInstruction(problemspecificDescriptor.createTerminalNode(problemspecificDescriptor.createTerminalNodeFromProblemdependSet()));
             }
         }
-        else
-        {
+        else {
             int i;
 
-            for( i = 0; i < problemspecificDescriptor.getNumberOfArgumentsOfInstruction(problemspecificDescriptor.getInstructionByIndex(selectedInstruction)); i++ )
-            {
+            for( i = 0; i < problemspecificDescriptor.getNumberOfArgumentsOfInstruction(problemspecificDescriptor.getInstructionByIndex(selectedInstruction)); i++ ) {
                 ptrman.mltoolset.PIPE.program.Node createdProgramNode;
 
                 // create node if it is not present
-                if (pptNode.childrens.size() < i + 1)
-                {
+                if (pptNode.childrens.size() < i + 1) {
                     pptNode.childrens.add(createPptNode());
                 }
                 
-                if (pptNode.childrens.get(i) == null)
-                {
+                if (pptNode.childrens.get(i) == null) {
                     pptNode.childrens.set(i, createPptNode());
                 }
                 
                 createdProgramNode = new ptrman.mltoolset.PIPE.program.Node();
                 
                 Assert.Assert(programNode.getChildrens().size() >= i, "");
-                if( programNode.getChildrens().size() == i )
-                {
+                if( programNode.getChildrens().size() == i ) {
                     programNode.getChildrens().add(null);
                 }
                 
@@ -85,8 +74,7 @@ public class PipeInstance {
         }
     }
 
-    private int selectInstructionIndexFromPptNode(ptrman.mltoolset.PIPE.PropabilisticPrototypeTree.Node pptNode)
-    {
+    private int selectInstructionIndexFromPptNode(ptrman.mltoolset.PIPE.PropabilisticPrototypeTree.Node pptNode) {
         float randomValue;
         float accumulated;
         int i;
@@ -96,14 +84,12 @@ public class PipeInstance {
         randomValue = random.nextFloat();
         accumulated = 0.0f;
         
-        for (i = 0; i < pptNode.propabilityVector.length; i++)
-        {
+        for (i = 0; i < pptNode.propabilityVector.length; i++) {
             accumulated += pptNode.propabilityVector[i];
 
             Assert.Assert(accumulated > 0.0f, "");
             
-            if (accumulated > randomValue)
-            {
+            if (accumulated > randomValue) {
                 return i;
             }
         }
@@ -111,55 +97,47 @@ public class PipeInstance {
         return -1; // in case of grc
     }
 
-    private ptrman.mltoolset.PIPE.PropabilisticPrototypeTree.Node createPptNode()
-    {
+    private ptrman.mltoolset.PIPE.PropabilisticPrototypeTree.Node createPptNode() {
         return problemspecificDescriptor.createPptNode();
     }
 
-    private static float calcProgramPropability(ptrman.mltoolset.PIPE.PropabilisticPrototypeTree.Node pptNode, ptrman.mltoolset.PIPE.program.Node programNode)
-    {
+    private static float calcProgramPropability(ptrman.mltoolset.PIPE.PropabilisticPrototypeTree.Node pptNode, ptrman.mltoolset.PIPE.program.Node programNode) {
         float propability;
         int i;
         
         propability = pptNode.propabilityVector[programNode.getInstruction().getIndex()];
 
-        for( i = 0; i < programNode.getChildrens().size(); i++ )
-        {
+        for( i = 0; i < programNode.getChildrens().size(); i++ ) {
             propability *= calcProgramPropability(pptNode.childrens.get(i), programNode.getChildrens().get(i));
         }
 
         return propability;
     }
 
-    private void increaseProgramPropability(ptrman.mltoolset.PIPE.PropabilisticPrototypeTree.Node pptNode, ptrman.mltoolset.PIPE.program.Node programNode)
-    {
+    private void increaseProgramPropability(ptrman.mltoolset.PIPE.PropabilisticPrototypeTree.Node pptNode, ptrman.mltoolset.PIPE.program.Node programNode) {
         int i;
         float propabilityDelta;
 
         propabilityDelta = (parameters.learningRate * parameters.learningRateConstant * (1.0f - pptNode.propabilityVector[programNode.getInstruction().getIndex()]));
         pptNode.propabilityVector[programNode.getInstruction().getIndex()] += propabilityDelta;
 
-        for (i = 0; i < problemspecificDescriptor.getInstructionByIndex(programNode.getInstruction().getIndex()).getNumberOfParameters(); i++)
-        {
+        for (i = 0; i < problemspecificDescriptor.getInstructionByIndex(programNode.getInstruction().getIndex()).getNumberOfParameters(); i++) {
             increaseProgramPropability(pptNode.childrens.get(i), programNode.getChildrens().get(i));
         }
     }
 
-    private void increaseNodePropabilitiesUntilTargetPropabilityIsReached(ptrman.mltoolset.PIPE.PropabilisticPrototypeTree.Node pptNode, ptrman.mltoolset.PIPE.program.Node programNode, float targetPropability)
-    {
+    private void increaseNodePropabilitiesUntilTargetPropabilityIsReached(ptrman.mltoolset.PIPE.PropabilisticPrototypeTree.Node pptNode, ptrman.mltoolset.PIPE.program.Node programNode, float targetPropability) {
         float currentPropability;
         
         currentPropability = calcProgramPropability(pptNode, programNode);
 
-        while (currentPropability < targetPropability)
-        {
+        while (currentPropability < targetPropability) {
             increaseProgramPropability(pptNode, programNode);
             currentPropability = calcProgramPropability(pptNode, programNode);
         }
     }
 
-    private void normalizePropabilities(ptrman.mltoolset.PIPE.PropabilisticPrototypeTree.Node pptNode, ptrman.mltoolset.PIPE.program.Node programNode)
-    {
+    private void normalizePropabilities(ptrman.mltoolset.PIPE.PropabilisticPrototypeTree.Node pptNode, ptrman.mltoolset.PIPE.program.Node programNode) {
         float propabilitySum;
         float oldPropability;
         float gamma;
@@ -169,35 +147,28 @@ public class PipeInstance {
         oldPropability = pptNode.propabilityVector[programNode.getInstruction().getIndex()] - (propabilitySum - 1.0f);
         gamma = calcGamma(pptNode, programNode, oldPropability);
 
-        for (i = 0; i < pptNode.propabilityVector.length; i++)
-        {
-            if (i != programNode.getInstruction().getIndex())
-            {
+        for (i = 0; i < pptNode.propabilityVector.length; i++) {
+            if (i != programNode.getInstruction().getIndex()) {
                 pptNode.propabilityVector[i] *= (1.0f - gamma);
                 ptrman.mltoolset.misc.Assert.Assert(pptNode.propabilityVector[i] <= 1.0f && pptNode.propabilityVector[i] >= 0.0f, "");
             }
         }
 
-        for (i = 0; i < problemspecificDescriptor.getInstructionByIndex(programNode.getInstruction().getIndex()).getNumberOfParameters(); i++)
-        {
+        for (i = 0; i < problemspecificDescriptor.getInstructionByIndex(programNode.getInstruction().getIndex()).getNumberOfParameters(); i++) {
             normalizePropabilities(pptNode.childrens.get(i), programNode.getChildrens().get(i));
         }
     }
 
-    private static float calcGamma(ptrman.mltoolset.PIPE.PropabilisticPrototypeTree.Node pptNode, ptrman.mltoolset.PIPE.program.Node programNode, float oldPropability)
-    {
-        if (oldPropability == 1.0f)
-        {
+    private static float calcGamma(ptrman.mltoolset.PIPE.PropabilisticPrototypeTree.Node pptNode, ptrman.mltoolset.PIPE.program.Node programNode, float oldPropability) {
+        if (oldPropability == 1.0f) {
             return 0.0f;
         }
-        else
-        {
+        else {
             return (pptNode.propabilityVector[programNode.getInstruction().getIndex()] - oldPropability) / (1.0f - oldPropability);
         }
     }
 
-    private void mutationOfPrototypeTree(ptrman.mltoolset.PIPE.program.Program bestProgram)
-    {
+    private void mutationOfPrototypeTree(ptrman.mltoolset.PIPE.program.Program bestProgram) {
         float mutationPropability;
         float bestRating;
         
@@ -209,26 +180,22 @@ public class PipeInstance {
         mutateProgram(bestProgram, mutationPropability);
     }
 
-    private void mutateProgram(ptrman.mltoolset.PIPE.program.Program bestProgram, float mutationPropability)
-    {
+    private void mutateProgram(ptrman.mltoolset.PIPE.program.Program bestProgram, float mutationPropability) {
         mutateNode(bestProgram.entry, mutationPropability);
     }
     
-    private void mutateNode(ptrman.mltoolset.PIPE.program.Node bestProgram, float mutationPropability)
-    {
+    private void mutateNode(ptrman.mltoolset.PIPE.program.Node bestProgram, float mutationPropability) {
         boolean changed;
         int i;
 
         changed = false;
 
-        for (i = 0; i < problemspecificDescriptor.getNumberOfInstructions(); i++)
-        {
+        for (i = 0; i < problemspecificDescriptor.getNumberOfInstructions(); i++) {
             boolean mutate;
 
             mutate = mutationPropability < random.nextFloat();
             
-            if( mutate )
-            {
+            if( mutate ) {
                 rootnode.propabilityVector[i] += (parameters.mutationRate * (1.0f - rootnode.propabilityVector[i]));
             }
             
@@ -236,23 +203,19 @@ public class PipeInstance {
         }
         
         // normalize
-        if( changed )
-        {
+        if( changed ) {
             rootnode.normalizePropabilities();
         }
         
-        for( ptrman.mltoolset.PIPE.program.Node iterationNode : bestProgram.getChildrens() )
-        {
-            if( iterationNode != null )
-            {
+        for( ptrman.mltoolset.PIPE.program.Node iterationNode : bestProgram.getChildrens() ) {
+            if( iterationNode != null ) {
                 mutateNode(iterationNode, mutationPropability);
             }
         }
     }
     
     // 4.3.3 Generation-Based Learning
-    private void generationBasedLearningIteration()
-    {
+    private void generationBasedLearningIteration() {
         int i;
         ArrayList<ptrman.mltoolset.PIPE.program.Program> population;
         Program bestProgram;
@@ -262,8 +225,7 @@ public class PipeInstance {
         // (1) creation of program population
 
         ptrman.mltoolset.misc.Assert.Assert(parameters.populationSize > 0, "populationsize must be >= 1");
-        for( i = 0; i < parameters.populationSize; i++ )
-        {
+        for( i = 0; i < parameters.populationSize; i++ ) {
             ptrman.mltoolset.PIPE.program.Program createdProgram;
             
             createdProgram = new Program();
@@ -276,16 +238,14 @@ public class PipeInstance {
         
         // (2) population evaluation
         
-        for( Program iterationProgram : population )
-        {
+        for( Program iterationProgram : population ) {
             iterationProgram.fitness = problemspecificDescriptor.getFitnessOfProgram(iterationProgram);
         }
         
         System.out.println("");
         System.out.println("candidates:");
         
-        for( i = 0; i < parameters.populationSize; i++ )
-        {
+        for( i = 0; i < parameters.populationSize; i++ ) {
             System.out.println(population.get(i).fitness);
             System.out.println(problemspecificDescriptor.getDescriptionOfProgramAsString(population.get(i)));
         }
@@ -293,22 +253,17 @@ public class PipeInstance {
         System.out.println("---");
         
         bestProgram = population.get(0);
-        for( Program iterationProgram : population )
-        {
-            if( iterationProgram.fitness < bestProgram.fitness )
-            {
+        for( Program iterationProgram : population ) {
+            if( iterationProgram.fitness < bestProgram.fitness ) {
                 bestProgram = iterationProgram;
             }
         }
         
-        if( elitist == null )
-        {
+        if( elitist == null ) {
             elitist = bestProgram;
         }
-        else
-        {
-            if( bestProgram.fitness < elitist.fitness )
-            {
+        else {
+            if( bestProgram.fitness < elitist.fitness ) {
                 elitist = bestProgram;
             }
         }

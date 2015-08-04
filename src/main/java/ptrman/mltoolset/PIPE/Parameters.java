@@ -3,8 +3,7 @@ package ptrman.mltoolset.PIPE;
 /**
  *
  */
-public class Parameters
-{
+public class Parameters {
     public int populationSize;
     
     public float learningRate;

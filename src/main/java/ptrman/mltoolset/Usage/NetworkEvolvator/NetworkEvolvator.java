@@ -6,7 +6,7 @@ import org.uncommons.watchmaker.framework.selection.RouletteWheelSelection;
 import org.uncommons.watchmaker.framework.termination.GenerationCount;
 
 /**
- * Created by r0b3 on 02.06.15.
+ *
  */
 public class NetworkEvolvator {
     public static void main(String[] args) {

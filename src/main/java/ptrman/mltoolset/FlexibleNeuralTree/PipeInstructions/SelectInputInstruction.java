@@ -6,30 +6,25 @@ import ptrman.mltoolset.PIPE.program.Instruction;
  *
  * returns a (at construction time determined) value and returns it
  */
-public class SelectInputInstruction implements Instruction
-{
+public class SelectInputInstruction implements Instruction {
     
-    public SelectInputInstruction(int index, int variableIndex)
-    {
+    public SelectInputInstruction(int index, int variableIndex) {
         this.index = index;
         this.variableIndex = variableIndex;
     }
     
     @Override
-    public int getNumberOfParameters()
-    {
+    public int getNumberOfParameters() {
         return 0;
     }
 
     @Override
-    public int getIndex()
-    {
+    public int getIndex() {
         return index;
     }
 
     @Override
-    public Instruction getInstance()
-    {
+    public Instruction getInstance() {
         return new SelectInputInstruction(index, variableIndex);
     }
     

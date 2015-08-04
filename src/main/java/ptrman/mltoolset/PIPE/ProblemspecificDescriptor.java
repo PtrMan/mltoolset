@@ -3,8 +3,7 @@ package ptrman.mltoolset.PIPE;
 import ptrman.mltoolset.PIPE.program.Instruction;
 import ptrman.mltoolset.PIPE.program.Program;
 
-public interface ProblemspecificDescriptor
-{
+public interface ProblemspecificDescriptor {
     int getNumberOfArgumentsOfInstruction(Instruction selectedInstruction);
     
     ptrman.mltoolset.PIPE.program.Instruction createTerminalNode(float randomConstant);

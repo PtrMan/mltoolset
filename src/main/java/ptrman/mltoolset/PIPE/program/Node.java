@@ -15,13 +15,11 @@ public class Node {
         this.instruction = instruction;
     }
     
-    public Instruction getInstruction()
-    {
+    public Instruction getInstruction() {
         return instruction;
     }
     
-    public ArrayList<Node> getChildrens()
-    {
+    public ArrayList<Node> getChildrens() {
         return childrens;
     }
     
@@ -31,8 +29,7 @@ public class Node {
         
         numberOfNodes = 1;
         
-        for( Node iterationNode : getChildrens() )
-        {
+        for( Node iterationNode : getChildrens() ) {
             numberOfNodes += iterationNode.getNumberOfNodesRecursive();
         }
         

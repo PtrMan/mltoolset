@@ -1,6 +1,5 @@
 package ptrman.mltoolset.Usage.NetworkEvolvator;
 
-
 import ptrman.mltoolset.Neuroid.Neuroid;
 
 import java.util.ArrayList;

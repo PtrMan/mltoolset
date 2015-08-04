@@ -19,7 +19,7 @@ public class NetworkFitnessEvaluator implements FitnessEvaluator<NetworkGeneticE
         }
 
         @Override
-        public void calculateUpdateFunction(Neuroid.NeuroidGraph.NeuronNode<Float, Integer> neuroid, Neuroid.IWeighttypeHelper<Float> weighttypeHelper) {
+        public void calculateUpdateFunction(Neuroid.NeuroidGraph<Float, Integer> graph, Neuroid.NeuroidGraph.NeuronNode<Float, Integer> neuroid, Neuroid.IWeighttypeHelper<Float> weighttypeHelper) {
             neuroid.graphElement.nextFiring = neuroid.graphElement.isStimulated(weighttypeHelper);
 
             if (neuroid.graphElement.nextFiring) {
@@ -58,7 +58,6 @@ public class NetworkFitnessEvaluator implements FitnessEvaluator<NetworkGeneticE
         neuroid.update = new Update(latencyAfterActivation, randomFiringPropability);
 
         neuroid.allocateNeurons(networkGeneticExpression.neuronCandidatesActive.length, numberOfInputNeurons, 1);
-        neuroid.input = new boolean[numberOfInputNeurons];
 
         for( int neuronI = 0; neuronI < networkGeneticExpression.neuronCandidatesActive.length; neuronI++ ) {
             neuroid.getGraph().neuronNodes[neuronI].graphElement.threshold = new Float(0.4f);
@@ -73,7 +72,7 @@ public class NetworkFitnessEvaluator implements FitnessEvaluator<NetworkGeneticE
             // stimulate
 
             if( (timestep % 5) == 0 ) {
-                neuroid.input[0] = true;
+                neuroid.setActivationOfInputNeuron(0, true);
             }
 
             neuroid.timestep();
