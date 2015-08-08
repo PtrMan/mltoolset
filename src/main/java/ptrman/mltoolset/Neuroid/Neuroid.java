@@ -20,37 +20,6 @@ import static java.lang.Math.max;
  * 
  */
 public class Neuroid<Weighttype, ModeType> {
-    public static class FloatWeighttypeHelper implements Neuroid.IWeighttypeHelper {
-        @Override
-        public Object getValueForZero() {
-            return 0.0f;
-        }
-
-        @Override
-        public boolean greater(Object left, Object right) {
-            final float leftAsFloat = (Float)left;
-            final float rightAsFloat = (Float)right;
-
-            return leftAsFloat > rightAsFloat;
-        }
-
-        @Override
-        public boolean greaterEqual(Object left, Object right) {
-            final float leftAsFloat = (Float)left;
-            final float rightAsFloat = (Float)right;
-
-            return leftAsFloat >= rightAsFloat;
-        }
-
-        @Override
-        public Object add(Object left, Object right) {
-            final float leftAsFloat = (Float)left;
-            final float rightAsFloat = (Float)right;
-
-            return leftAsFloat + rightAsFloat;
-        }
-    }
-
     public interface IWeighttypeHelper<Weighttype> {
         public Weighttype getValueForZero();
         public boolean greater(Weighttype left, Weighttype right);

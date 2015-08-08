@@ -54,7 +54,7 @@ public class NetworkFitnessEvaluator implements FitnessEvaluator<NetworkGeneticE
 
         // evaluate how many times the output neuron (neuron 0) got stimulated
 
-        Neuroid<Float, Integer> neuroid = new Neuroid<>(new Neuroid.FloatWeighttypeHelper());
+        Neuroid<Float, Integer> neuroid = new Neuroid<>(new ptrman.mltoolset.Neuroid.FloatWeightHelper());
         neuroid.update = new Update(latencyAfterActivation, randomFiringPropability);
 
         neuroid.allocateNeurons(networkGeneticExpression.neuronCandidatesActive.length, numberOfInputNeurons, 1);

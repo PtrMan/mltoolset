@@ -43,7 +43,7 @@ public class TestNeuroidSimple {
         final int latencyAfterActivation = 3;
         final float randomFiringPropability =.0f;
 
-        Neuroid<Float, Integer> neuroid = new Neuroid<>(new Neuroid.FloatWeighttypeHelper());
+        Neuroid<Float, Integer> neuroid = new Neuroid<>(new ptrman.mltoolset.Neuroid.FloatWeightHelper());
         neuroid.update = new Update(latencyAfterActivation, randomFiringPropability);
 
         neuroid.allocateNeurons(3, 3, 0);
