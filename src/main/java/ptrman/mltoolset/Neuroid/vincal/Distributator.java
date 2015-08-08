@@ -33,33 +33,23 @@ public class Distributator {
 
         @Override
         public List<Neuroid.Helper.EdgeWeightTuple<Weighttype>> createEdges(Weighttype weight, int minInputsPerHiddenNeuron, int maxInputsPerHiddenNeuron, double multipleConnectionsPropability, Random random) {
-            assert minInputsPerHiddenNeuron >= 2;
+            assert minInputsPerHiddenNeuron >= 1;
             assert maxInputsPerHiddenNeuron >= minInputsPerHiddenNeuron;
             assert multipleConnectionsPropability >= 0.0 && multipleConnectionsPropability <= 1.0;
 
-            // TODO< multiple connections >
-
             List<Neuroid.Helper.EdgeWeightTuple<Weighttype>> resultEdges = new ArrayList<>();
 
-            List<Integer> remainingHiddenNeuroids = new ArrayList<>();
-            for( int hiddenNeuroidIndex = 0; hiddenNeuroidIndex < numberOfHiddenNeurons; hiddenNeuroidIndex++ ) {
-                remainingHiddenNeuroids.add(hiddenNeuroidIndex);
-            }
+            for( int hiddenNeuronIndex = 0; hiddenNeuronIndex < numberOfHiddenNeurons; hiddenNeuronIndex++ ) {
+                int numberOfInputsForThisHiddenNeuron = minInputsPerHiddenNeuron;
+                if( random.nextDouble() < multipleConnectionsPropability ) {
+                    numberOfInputsForThisHiddenNeuron = minInputsPerHiddenNeuron + random.nextInt(maxInputsPerHiddenNeuron - minInputsPerHiddenNeuron);
+                }
 
-            for( int hiddenNeuronCounter = 0; hiddenNeuronCounter < numberOfHiddenNeurons; hiddenNeuronCounter++ ) {
-                final int sourceInputAIndexOffset = random.nextInt(inputWidth);
-                final int sourceInputBIndexOffset = random.nextInt(inputWidth);
-
-                final int hiddenIndexIndex = random.nextInt(remainingHiddenNeuroids.size());
-                final int hiddenIndex = remainingHiddenNeuroids.get(hiddenIndexIndex);
-                remainingHiddenNeuroids.remove(hiddenIndexIndex);
-
-                final List<Integer> sourceInputs = DistinctUtility.getTwoDisjunctNumbers(random, numberOfInputs);
-                final int sourceInputA = sourceInputs.get(0);
-                final int sourceInputB = sourceInputs.get(1);
-
-                resultEdges.add(new Neuroid.Helper.EdgeWeightTuple<>(new Neuroid.Helper.EdgeWeightTuple.NeuronAdress(sourceInputA*inputWidth + sourceInputAIndexOffset, Neuroid.Helper.EdgeWeightTuple.NeuronAdress.EnumType.INPUT), new Neuroid.Helper.EdgeWeightTuple.NeuronAdress(hiddenIndex, Neuroid.Helper.EdgeWeightTuple.NeuronAdress.EnumType.HIDDEN), weight));
-                resultEdges.add(new Neuroid.Helper.EdgeWeightTuple<>(new Neuroid.Helper.EdgeWeightTuple.NeuronAdress(sourceInputB*inputWidth + sourceInputBIndexOffset, Neuroid.Helper.EdgeWeightTuple.NeuronAdress.EnumType.INPUT), new Neuroid.Helper.EdgeWeightTuple.NeuronAdress(hiddenIndex, Neuroid.Helper.EdgeWeightTuple.NeuronAdress.EnumType.HIDDEN), weight));
+                final List<Integer> sourceInputs = DistinctUtility.getNDisjunctIntegers(random, numberOfInputsForThisHiddenNeuron, numberOfInputs);
+                for( int sourceInput : sourceInputs ) {
+                    final int sourceInputIndexOffset = random.nextInt(inputWidth);
+                    resultEdges.add(new Neuroid.Helper.EdgeWeightTuple<>(new Neuroid.Helper.EdgeWeightTuple.NeuronAdress(sourceInput*inputWidth + sourceInputIndexOffset, Neuroid.Helper.EdgeWeightTuple.NeuronAdress.EnumType.INPUT), new Neuroid.Helper.EdgeWeightTuple.NeuronAdress(hiddenNeuronIndex, Neuroid.Helper.EdgeWeightTuple.NeuronAdress.EnumType.HIDDEN), weight));
+                }
             }
 
             return resultEdges;
