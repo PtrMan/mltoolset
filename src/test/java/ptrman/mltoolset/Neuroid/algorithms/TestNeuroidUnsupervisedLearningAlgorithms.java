@@ -25,7 +25,7 @@ public class TestNeuroidUnsupervisedLearningAlgorithms {
         neuroid.allocateNeurons(5, 5 * 2, 0);
 
         for( int neuronI = 0; neuronI < 5; neuronI++ ) {
-            neuroid.getGraph().neuronNodes[neuronI].graphElement.threshold = 1;
+            neuroid.getGraph().neuronNodes[neuronI].graphElement.threshold = 0xffff; // inf
         }
 
         neuroid.addEdgeWeightTuples(graphEdges);
