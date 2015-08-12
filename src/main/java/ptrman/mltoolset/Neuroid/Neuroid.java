@@ -21,7 +21,11 @@ import static java.lang.Math.max;
  */
 public class Neuroid<Weighttype, ModeType> {
     public interface IWeighttypeHelper<Weighttype> {
+        // deprecated
         public Weighttype getValueForZero();
+
+        Weighttype getValueForObject(Object value);
+
         public boolean greater(Weighttype left, Weighttype right);
         public boolean greaterEqual(Weighttype left, Weighttype right);
 

@@ -14,7 +14,7 @@ import java.util.Random;
 public class TestNeuroidUnsupervisedLearningAlgorithms {
     @Test
     public void twoInputs() {
-        Distributator.IConnectorService<Integer> connectorService = new Distributator.BouncebackConnectorService<>(5, 2, 5);
+        Distributator.IConnectorService<Integer> connectorService = new Distributator.ManyToOneConnectorService<>(5, 2, 5);
 
         List<Neuroid.Helper.EdgeWeightTuple<Integer>> graphEdges = connectorService.createEdges(1, 2, 2, 0.0, new Random());
 

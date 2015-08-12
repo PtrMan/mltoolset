@@ -10,6 +10,18 @@ public class FloatWeightHelper implements Neuroid.IWeighttypeHelper {
     }
 
     @Override
+    public Object getValueForObject(Object value) {
+        if( value instanceof Integer ) {
+            return ((Integer)value).floatValue();
+        }
+        else if( value instanceof Float ) {
+            return value;
+        }
+
+        throw new InternalError();
+    }
+
+    @Override
     public boolean greater(Object left, Object right) {
         final float leftAsFloat = (Float)left;
         final float rightAsFloat = (Float)right;

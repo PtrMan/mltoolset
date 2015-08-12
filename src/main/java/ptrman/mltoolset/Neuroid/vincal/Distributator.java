@@ -17,15 +17,17 @@ public class Distributator {
 
     /**
      *
-     * connects them by going from one input to a random Neuroid and going back to a neuron of the other input
+     * connects them by this algorithm:
+     * for each target neuron (which can be a output):
+     *     choosing a random set of input-neuron-sets and connecting them to a other target neuron
      *
      */
-    public static class BouncebackConnectorService<Weighttype> implements IConnectorService<Weighttype> {
+    public static class ManyToOneConnectorService<Weighttype> implements IConnectorService<Weighttype> {
         private final int numberOfInputs;
         private final int inputWidth;
         private final int numberOfHiddenNeurons;
 
-        public BouncebackConnectorService(int inputWidth, int numberOfInputs, int numberOfHiddenNeurons) {
+        public ManyToOneConnectorService(int inputWidth, int numberOfInputs, int numberOfHiddenNeurons) {
             this.inputWidth = inputWidth;
             this.numberOfInputs = numberOfInputs;
             this.numberOfHiddenNeurons = numberOfHiddenNeurons;
@@ -54,5 +56,79 @@ public class Distributator {
 
             return resultEdges;
         }
+    }
+
+    public static class SupervisedStandardConnectionService<Weighttype> implements IConnectorService<Weighttype> {
+        public SupervisedStandardConnectionService(final int inputneuronCount, final int numberOfRelayneurons, final int numberOfOutputNeurons, final Neuroid.IWeighttypeHelper<Weighttype> weighttypeHelper) {
+            this.inputneuronCount = inputneuronCount;
+            this.numberOfRelayneurons = numberOfRelayneurons;
+            this.numberOfOutputNeurons = numberOfOutputNeurons;
+            this.weighttypeHelper = weighttypeHelper;
+        }
+
+        @Override
+        public List<Neuroid.Helper.EdgeWeightTuple<Weighttype>> createEdges(Weighttype weight, int minInputsPerHiddenNeuron, int maxInputsPerHiddenNeuron, double multipleConnectionsPropability, Random random) {
+            List<Neuroid.Helper.EdgeWeightTuple<Weighttype>> resultConnections = new ArrayList<>();
+
+            resultConnections.addAll(getConnectionsFromDirectInputToRelayNeurons());
+            resultConnections.addAll(getConnectionsFromRelayNeuronsToOutputNeurons());
+
+            return resultConnections;
+        }
+
+        private List<Neuroid.Helper.EdgeWeightTuple<Weighttype>> getConnectionsFromDirectInputToRelayNeurons() {
+            List<Neuroid.Helper.EdgeWeightTuple.NeuronAdress> directInputNeurons = getDirectInputNeurons();
+            List<Neuroid.Helper.EdgeWeightTuple.NeuronAdress> hiddenRelayNeurons = getHiddenRelayNeurons();
+
+            return DistribuatorHelper.forEachInputChooseRandomOutput(directInputNeurons, hiddenRelayNeurons, weighttypeHelper.getValueForObject(1), random);
+        }
+
+        // output neurons aren't the network output neurons
+        private List<Neuroid.Helper.EdgeWeightTuple<Weighttype>> getConnectionsFromRelayNeuronsToOutputNeurons() {
+            List<Neuroid.Helper.EdgeWeightTuple.NeuronAdress> hiddenRelayNeurons = getHiddenRelayNeurons();
+            List<Neuroid.Helper.EdgeWeightTuple.NeuronAdress> outputNeurons = getOutputNeurons();
+
+            return DistribuatorHelper.forEachInputChooseRandomOutput(hiddenRelayNeurons, outputNeurons, weighttypeHelper.getValueForObject(1), random);
+        }
+
+        private List<Neuroid.Helper.EdgeWeightTuple.NeuronAdress> getHiddenRelayNeurons() {
+            List<Neuroid.Helper.EdgeWeightTuple.NeuronAdress> hiddenRelayNeurons = new ArrayList<>();
+
+            // the from numberOfOutputNeurons hidden neurons are relay neurons
+
+            for( int i = 0; i < numberOfRelayneurons; i++ ) {
+                hiddenRelayNeurons.add(new Neuroid.Helper.EdgeWeightTuple.NeuronAdress(numberOfOutputNeurons + i, Neuroid.Helper.EdgeWeightTuple.NeuronAdress.EnumType.HIDDEN));
+            }
+
+            return hiddenRelayNeurons;
+        }
+
+        private List<Neuroid.Helper.EdgeWeightTuple.NeuronAdress> getDirectInputNeurons() {
+            List<Neuroid.Helper.EdgeWeightTuple.NeuronAdress> directInputNeurons = new ArrayList<>();
+
+            for( int inputNeuronIndex = 0; inputNeuronIndex < inputneuronCount; inputNeuronIndex++ ) {
+                directInputNeurons.add(new Neuroid.Helper.EdgeWeightTuple.NeuronAdress(inputNeuronIndex, Neuroid.Helper.EdgeWeightTuple.NeuronAdress.EnumType.INPUT));
+            }
+
+            return directInputNeurons;
+        }
+
+        private List<Neuroid.Helper.EdgeWeightTuple.NeuronAdress> getOutputNeurons() {
+            List<Neuroid.Helper.EdgeWeightTuple.NeuronAdress> outputNeurons = new ArrayList<>();
+
+            for( int i = 0; i < numberOfRelayneurons; i++ ) {
+                outputNeurons.add(new Neuroid.Helper.EdgeWeightTuple.NeuronAdress(i, Neuroid.Helper.EdgeWeightTuple.NeuronAdress.EnumType.HIDDEN));
+            }
+
+            return outputNeurons;
+        }
+
+        private final int numberOfOutputNeurons;
+        private final int numberOfRelayneurons;
+        private final int inputneuronCount;
+
+        private final Neuroid.IWeighttypeHelper<Weighttype> weighttypeHelper;
+
+        private Random random = new Random();
     }
 }
