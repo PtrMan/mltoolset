@@ -143,11 +143,24 @@ public class Neuroid<Weighttype, ModeType> {
 
     public void timestep() {
         // order is important
+
         updateFiringForAllNeuroids();
         updateIncommingWeigthsForAllNeuroids();
         updateNeuronStates();
         decreaseLatency();
     }
+
+
+    /*
+      uncommented because maybe not needed
+
+    // helper for JOIN operation
+    public void updateIncommingWeightsForNeuroids(final Set<NeuroidGraph.NeuronNode<Weighttype, ModeType>> neuroidsToUpdate) {
+        for( NeuroidGraph.NeuronNode<Weighttype, ModeType> iterationNeuroid : neuroidsToUpdate ) {
+            updateIncommingWeighsForNeuroid(iterationNeuroid);
+        }
+    }
+    */
 
     public void addConnections(List<NeuroidGraph.Edge<Weighttype, ModeType>> edges) {
         for( final NeuroidGraph.Edge<Weighttype, ModeType> edge : edges) {
@@ -253,21 +266,24 @@ public class Neuroid<Weighttype, ModeType> {
     private void updateIncommingWeigthsForAllNeuroids() {
         // add up the weights of the incomming edges
         for( int iterationNeuronI = 0; iterationNeuronI < neuroidsGraph.neuronNodes.length; iterationNeuronI++ ) {
-            NeuroidGraph.NeuronNode<Weighttype, ModeType> iterationNeuron = neuroidsGraph.neuronNodes[iterationNeuronI];
-
-            Weighttype sumOfWeightsOfThisNeuron = weighttypeHelper.getValueForZero();
-            Set<NeuroidGraph.Edge<Weighttype, ModeType>> incommingEdges = neuroidsGraph.graph.getInEdges(iterationNeuron);
-
-            for( NeuroidGraph.Edge<Weighttype, ModeType> iterationIncommingEdge : incommingEdges ) {
-                final boolean activation = iterationIncommingEdge.getSourceNode().graphElement.firing;
-                if (activation) {
-                    final Weighttype edgeWeight = iterationIncommingEdge.weight;
-                    sumOfWeightsOfThisNeuron = weighttypeHelper.add(sumOfWeightsOfThisNeuron, edgeWeight);
-                }
-            }
-
-            iterationNeuron.graphElement.sumOfIncommingWeights = sumOfWeightsOfThisNeuron;
+            NeuroidGraph.NeuronNode<Weighttype, ModeType> iterationNeuroid = neuroidsGraph.neuronNodes[iterationNeuronI];
+            updateIncommingWeighsForNeuroid(iterationNeuroid);
         }
+    }
+
+    private void updateIncommingWeighsForNeuroid(NeuroidGraph.NeuronNode<Weighttype, ModeType> neuroid) {
+        Weighttype sumOfWeightsOfThisNeuron = weighttypeHelper.getValueForZero();
+        Set<NeuroidGraph.Edge<Weighttype, ModeType>> incommingEdges = neuroidsGraph.graph.getInEdges(neuroid);
+
+        for( NeuroidGraph.Edge<Weighttype, ModeType> iterationIncommingEdge : incommingEdges ) {
+            final boolean activation = iterationIncommingEdge.getSourceNode().graphElement.firing;
+            if (activation) {
+                final Weighttype edgeWeight = iterationIncommingEdge.weight;
+                sumOfWeightsOfThisNeuron = weighttypeHelper.add(sumOfWeightsOfThisNeuron, edgeWeight);
+            }
+        }
+
+        neuroid.graphElement.sumOfIncommingWeights = sumOfWeightsOfThisNeuron;
     }
 
     private void updateFiringForAllNeuroids() {

@@ -8,7 +8,7 @@ import java.util.List;
 import java.util.Random;
 
 /**
- * Connects the input neurons/hidden neurons in a random way which still fulfills the vincal criteria.
+ * Connects the input neurons/hidden neurons in a random way which still fulfills the vicinal criteria.
  */
 public class Distributator {
     public interface IConnectorService<Weighttype> {
