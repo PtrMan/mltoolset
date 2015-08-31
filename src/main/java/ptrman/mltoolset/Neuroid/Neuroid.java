@@ -173,6 +173,16 @@ public class Neuroid<Weighttype, ModeType> {
     }
 
     public void addEdgeWeightTuples(List<Helper.EdgeWeightTuple<Weighttype>> edgeWeightTuples) {
+        final boolean debugEdgeWeights = false; // enable just for finding bugs
+
+        if( debugEdgeWeights ) {
+            for( final Helper.EdgeWeightTuple<Weighttype> iterationEdgeWeightTuple : edgeWeightTuples ) {
+                System.out.format("edge %d->%d, float-w %f", iterationEdgeWeightTuple.sourceAdress.index, iterationEdgeWeightTuple.destinationAdress.index, ((Float)iterationEdgeWeightTuple.weight).floatValue());
+                System.out.println();
+            }
+        }
+
+
         for( final Helper.EdgeWeightTuple<Weighttype> iterationEdgeWeightTuple : edgeWeightTuples ) {
             final NeuroidGraph.NeuronNode<Weighttype, ModeType> sourceNode, destinationNode;
 

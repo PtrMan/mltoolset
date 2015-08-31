@@ -47,14 +47,198 @@ public class TestNeuroidPredictiveJoinLearningAlgorithm {
 
     }
 
+    private static class Context {
+        Set<Neuroid.NeuroidGraph.NeuronNode<Float, Integer>> a;
+        Set<Neuroid.NeuroidGraph.NeuronNode<Float, Integer>> b;
+
+
+        Neuroid<Float, Integer> network;
+
+
+    }
+
+
+
+
     @Test
-    public void testJoinEnhanced() {
+    public void testJoinEnhancedCState() {
         final int numberOfNeuronsInGroup = 5;
 
         final int r = numberOfNeuronsInGroup; // how many neuroids should be (roughtly?) allocated
         final int k = 2; // how many synapses should at least go from "a" and "b" to "z"?
         final float T = 1.0f; // standard threshold
 
+        Context context = createNetworkAndDoLinkOperation(numberOfNeuronsInGroup, r, k, T);
+
+
+        // check for at least one neuron in "z" which is in the Operational state
+        final Set<Neuroid.NeuroidGraph.NeuronNode<Float, Integer>> z = getNeuroidsSet(context.network, 0, numberOfNeuronsInGroup, 2);
+
+        boolean atLeastOneResultNeuroidInOperationalState = false;
+
+        for( Neuroid.NeuroidGraph.NeuronNode<Float, Integer> iterationNeuroid : z ) {
+            System.out.println(iterationNeuroid.graphElement.state);
+
+            if( iterationNeuroid.graphElement.state == EnumStandardNeuroidState.JoinEnhancedOperational.ordinal() ) {
+                atLeastOneResultNeuroidInOperationalState = true;
+                break;
+            }
+        }
+
+        Assert.assertTrue(atLeastOneResultNeuroidInOperationalState);
+    }
+
+
+    @Test
+    public void testJoinEnhancedCorrectActivationAActiveBActive() {
+        final int numberOfNeuronsInGroup = 5;
+
+        final int r = numberOfNeuronsInGroup; // how many neuroids should be (roughtly?) allocated
+        final int k = 2; // how many synapses should at least go from "a" and "b" to "z"?
+        final float T = 1.0f; // standard threshold
+
+        Context context = createNetworkAndDoLinkOperation(numberOfNeuronsInGroup, r, k, T);
+
+        // neurons in z should be in Operational state, is not checked
+
+        // let all inputs fire and look if the result fires
+        for( Neuroid.NeuroidGraph.NeuronNode<Float, Integer> iterationANeuroid : context.a ) {
+            iterationANeuroid.graphElement.nextFiring = true;
+        }
+        for( Neuroid.NeuroidGraph.NeuronNode<Float, Integer> iterationANeuroid : context.b ) {
+            iterationANeuroid.graphElement.nextFiring = true;
+        }
+
+        context.network.timestep();
+
+        // at least one neuron should fire
+
+        final Set<Neuroid.NeuroidGraph.NeuronNode<Float, Integer>> z = getNeuroidsSet(context.network, 0, numberOfNeuronsInGroup, 2);
+
+        boolean atLeastOneNeuroidInZFiring = false;
+
+        for( Neuroid.NeuroidGraph.NeuronNode<Float, Integer> iterationNeuroid : z ) {
+            if( iterationNeuroid.graphElement.nextFiring ) {
+                atLeastOneNeuroidInZFiring = true;
+                break;
+            }
+        }
+
+        Assert.assertTrue(atLeastOneNeuroidInZFiring);
+    }
+
+
+
+
+    @Test
+    public void testJoinEnhancedCorrectActivationAActiveBInactive() {
+        final int numberOfNeuronsInGroup = 5;
+
+        final int r = numberOfNeuronsInGroup; // how many neuroids should be (roughtly?) allocated
+        final int k = 2; // how many synapses should at least go from each of "a", "b" to "z"?
+        final float T = 1.0f; // standard threshold
+
+        Context context = createNetworkAndDoLinkOperation(numberOfNeuronsInGroup, r, k, T);
+
+        // neurons in z should be in Operational state, is not checked
+
+        // let all inputs fire and look if the result fires
+        for( Neuroid.NeuroidGraph.NeuronNode<Float, Integer> iterationANeuroid : context.a ) {
+            iterationANeuroid.graphElement.nextFiring = true;
+        }
+        for( Neuroid.NeuroidGraph.NeuronNode<Float, Integer> iterationANeuroid : context.b ) {
+            iterationANeuroid.graphElement.nextFiring = false;
+        }
+
+        System.out.print("---");
+        System.out.println();
+
+        context.network.timestep();
+
+        // all neurons in z shouldn't fire
+
+        final Set<Neuroid.NeuroidGraph.NeuronNode<Float, Integer>> z = getNeuroidsSet(context.network, 0, numberOfNeuronsInGroup, 2);
+
+        for( Neuroid.NeuroidGraph.NeuronNode<Float, Integer> iterationNeuroid : z ) {
+            Assert.assertFalse(iterationNeuroid.graphElement.nextFiring);
+        }
+    }
+
+
+    @Test
+    public void testJoinEnhancedCorrectActivationAInactiveBActive() {
+        final int numberOfNeuronsInGroup = 5;
+
+        final int r = numberOfNeuronsInGroup; // how many neuroids should be (roughtly?) allocated
+        final int k = 2; // how many synapses should at least go from each of "a", "b" to "z"?
+        final float T = 1.0f; // standard threshold
+
+        Context context = createNetworkAndDoLinkOperation(numberOfNeuronsInGroup, r, k, T);
+
+        // neurons in z should be in Operational state, is not checked
+
+        // let all inputs fire and look if the result fires
+        for( Neuroid.NeuroidGraph.NeuronNode<Float, Integer> iterationANeuroid : context.a ) {
+            iterationANeuroid.graphElement.nextFiring = false;
+        }
+        for( Neuroid.NeuroidGraph.NeuronNode<Float, Integer> iterationANeuroid : context.b ) {
+            iterationANeuroid.graphElement.nextFiring = true;
+        }
+
+        System.out.print("---");
+        System.out.println();
+
+        context.network.timestep();
+
+        // all neurons in z shouldn't fire
+
+        final Set<Neuroid.NeuroidGraph.NeuronNode<Float, Integer>> z = getNeuroidsSet(context.network, 0, numberOfNeuronsInGroup, 2);
+
+        for( Neuroid.NeuroidGraph.NeuronNode<Float, Integer> iterationNeuroid : z ) {
+            Assert.assertFalse(iterationNeuroid.graphElement.nextFiring);
+        }
+    }
+
+
+
+
+    @Test
+    public void testJoinEnhancedCorrectActivationAInactiveBInactive() {
+        final int numberOfNeuronsInGroup = 5;
+
+        final int r = numberOfNeuronsInGroup; // how many neuroids should be (roughtly?) allocated
+        final int k = 2; // how many synapses should at least go from each of "a", "b" to "z"?
+        final float T = 1.0f; // standard threshold
+
+        Context context = createNetworkAndDoLinkOperation(numberOfNeuronsInGroup, r, k, T);
+
+        // neurons in z should be in Operational state, is not checked
+
+        // let all inputs fire and look if the result fires
+        for( Neuroid.NeuroidGraph.NeuronNode<Float, Integer> iterationANeuroid : context.a ) {
+            iterationANeuroid.graphElement.nextFiring = false;
+        }
+        for( Neuroid.NeuroidGraph.NeuronNode<Float, Integer> iterationANeuroid : context.b ) {
+            iterationANeuroid.graphElement.nextFiring = false;
+        }
+
+        System.out.print("---");
+        System.out.println();
+
+        context.network.timestep();
+
+        // all neurons in z shouldn't fire
+
+        final Set<Neuroid.NeuroidGraph.NeuronNode<Float, Integer>> z = getNeuroidsSet(context.network, 0, numberOfNeuronsInGroup, 2);
+
+        for( Neuroid.NeuroidGraph.NeuronNode<Float, Integer> iterationNeuroid : z ) {
+            Assert.assertFalse(iterationNeuroid.graphElement.nextFiring);
+        }
+    }
+
+
+
+    private static Context createNetworkAndDoLinkOperation(int numberOfNeuronsInGroup, int r, int k, float T) {
         Random random = new Random(4223);
 
         Neuroid<Float, Integer> network = new Neuroid<>(new FloatWeightHelper());
@@ -87,21 +271,12 @@ public class TestNeuroidPredictiveJoinLearningAlgorithm {
         // do actual test
         predictiveJoinLearningAlgorithm.joinEnhanced(a, b);
 
-        // check for at least one neuron in "z" which is in the Operational state
-        final Set<Neuroid.NeuroidGraph.NeuronNode<Float, Integer>> z = getNeuroidsSet(network, 0, numberOfNeuronsInGroup, 2);
+        Context resultContext = new Context();
+        resultContext.a = a;
+        resultContext.b = b;
+        resultContext.network = network;
 
-        boolean atLeastOneResultNeuroidInOperationalState = false;
-
-        for( Neuroid.NeuroidGraph.NeuronNode<Float, Integer> iterationNeuroid : z ) {
-            System.out.println(iterationNeuroid.graphElement.state);
-
-            if( iterationNeuroid.graphElement.state == EnumStandardNeuroidState.JoinEnhancedOperational.ordinal() ) {
-                atLeastOneResultNeuroidInOperationalState = true;
-                break;
-            }
-        }
-
-        Assert.assertTrue(atLeastOneResultNeuroidInOperationalState);
+        return resultContext;
     }
 
     private static List<Neuroid.Helper.EdgeWeightTuple<Float>> generateEdgesForTestNetwork(Random random, int numberOfNeuronsInGroup, int k, float T) {
@@ -117,11 +292,13 @@ public class TestNeuroidPredictiveJoinLearningAlgorithm {
             List<Integer> neuronsInA = new ArrayList<>();
             List<Integer> neuronsInB = new ArrayList<>();
 
+
             neuronsInA = DistinctUtility.getNDisjunctIntegers(random, k, numberOfNeuronsInGroup);
             neuronsInB = DistinctUtility.getNDisjunctIntegers(random, k, numberOfNeuronsInGroup);
 
             /*
-            int remainingSynapses = k;
+
+            int remainingSynapses = k * 2;
 
             for(;;) {
                 // TODO< equal randomisation of chosen group (if "a" or "b") >
@@ -137,14 +314,15 @@ public class TestNeuroidPredictiveJoinLearningAlgorithm {
                 if( remainingSynapses <= 0 ) {
                     break;
                 }
-            }
-            */
+            }*/
+
 
             // make connections
 
             for( final int iterationNeuronInA : neuronsInA ) {
                 final int sourceIndex = iterationNeuronInA + 0*numberOfNeuronsInGroup;
-                result.add(new Neuroid.Helper.EdgeWeightTuple<>(new Neuroid.Helper.EdgeWeightTuple.NeuronAdress(sourceIndex, Neuroid.Helper.EdgeWeightTuple.NeuronAdress.EnumType.HIDDEN), new Neuroid.Helper.EdgeWeightTuple.NeuronAdress(destinationNeuronIndex, Neuroid.Helper.EdgeWeightTuple.NeuronAdress.EnumType.HIDDEN), T/k));
+                final float threshold = T; // must be T because else the learning for the enhanced join mechanism doesn't work at all
+                result.add(new Neuroid.Helper.EdgeWeightTuple<>(new Neuroid.Helper.EdgeWeightTuple.NeuronAdress(sourceIndex, Neuroid.Helper.EdgeWeightTuple.NeuronAdress.EnumType.HIDDEN), new Neuroid.Helper.EdgeWeightTuple.NeuronAdress(destinationNeuronIndex, Neuroid.Helper.EdgeWeightTuple.NeuronAdress.EnumType.HIDDEN), threshold));
             }
 
             for( final int iterationNeuronInB : neuronsInB ) {
