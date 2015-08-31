@@ -2,8 +2,10 @@ package ptrman.mltoolset.Neuroid.algorithms;
 
 import ptrman.mltoolset.Neuroid.Neuroid;
 import ptrman.mltoolset.Neuroid.helper.EnumStandardNeuroidState;
+import ptrman.mltoolset.Neuroid.helper.Query;
 import ptrman.mltoolset.Neuroid.vincal.INeuroidAllocator;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 
@@ -89,14 +91,6 @@ public class NeuroidPredictiveJoinLearningAlgorithm {
             if (iterationZNeuroid.graphElement.nextFiring) {
                 adjustWeightsOfSynapsesCommingFromNeuroidSetWhichFiresForNeuroid(a, iterationZNeuroid, weightsForSynapsesFromFiringNeurons);
 
-                // adjust incomming weights of firing neurons from "a"
-                final Set<Neuroid.NeuroidGraph.Edge<Float, Integer>> edgesToIterationZNeuron = network.getGraph().graph.getInEdges(iterationZNeuroid);
-                for( final Neuroid.NeuroidGraph.Edge<Float, Integer> iterationIncommingEdgeNeuron : edgesToIterationZNeuron ) {
-                    if( a.contains(iterationIncommingEdgeNeuron.getSourceNode()) ) {
-                        iterationIncommingEdgeNeuron.weight = weightsForSynapsesFromFiringNeurons;
-                    }
-                }
-
                 iterationZNeuroid.graphElement.state = EnumStandardNeuroidState.JoinEnhancedPoised.ordinal();
 
             } else {
@@ -128,13 +122,7 @@ public class NeuroidPredictiveJoinLearningAlgorithm {
 
 
                 if (iterationZNeuroid.graphElement.nextFiring) {
-                    // adjust incomming weights of firing neurons from "b"
-                    final Set<Neuroid.NeuroidGraph.Edge<Float, Integer>> edgesToIterationZNeuron = network.getGraph().graph.getInEdges(iterationZNeuroid);
-                    for( final Neuroid.NeuroidGraph.Edge<Float, Integer> iterationIncommingEdgeNeuron : edgesToIterationZNeuron ) {
-                        if( b.contains(iterationIncommingEdgeNeuron.getSourceNode()) ) {
-                            iterationIncommingEdgeNeuron.weight = weightsForSynapsesFromFiringNeurons;
-                        }
-                    }
+                    adjustWeightsOfSynapsesCommingFromNeuroidSetWhichFiresForNeuroid(b, iterationZNeuroid, weightsForSynapsesFromFiringNeurons);
 
                     iterationZNeuroid.graphElement.state = EnumStandardNeuroidState.JoinEnhancedOperational.ordinal();
                 }
@@ -153,7 +141,15 @@ public class NeuroidPredictiveJoinLearningAlgorithm {
      * @param targetWeight
      */
     private void adjustWeightsOfSynapsesCommingFromNeuroidSetWhichFiresForNeuroid(Set<Neuroid.NeuroidGraph.NeuronNode<Float, Integer>> sourceNeuroidsWhichAreCheckedForFiring, Neuroid.NeuroidGraph.NeuronNode<Float, Integer> destinationNeuroid, float targetWeight) {
+        final List<Query.QueryCommand<Float, Integer>> queryCommands = Arrays.asList(
+            new Query.GetInEdgesByNeuroidIndexQueryCommand(destinationNeuroid.index),
+            new Query.FilterEdgeSourceQueryCommand(sourceNeuroidsWhichAreCheckedForFiring)
+        );
 
+        final Query.QueryResult<Float, Integer> queryResult = Query.query(queryCommands, network);
+        for( Neuroid.NeuroidGraph.Edge<Float, Integer> iterationEdge : queryResult.edgesSet ) {
+            iterationEdge.weight = targetWeight;
+        }
     }
 
 
