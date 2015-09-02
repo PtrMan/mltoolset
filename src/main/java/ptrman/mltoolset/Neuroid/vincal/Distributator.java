@@ -3,9 +3,7 @@ package ptrman.mltoolset.Neuroid.vincal;
 import ptrman.mltoolset.Neuroid.Neuroid;
 import ptrman.mltoolset.math.DistinctUtility;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Random;
+import java.util.*;
 
 /**
  * Connects the input neurons/hidden neurons in a random way which still fulfills the vicinal criteria.
@@ -77,22 +75,22 @@ public class Distributator {
         }
 
         private List<Neuroid.Helper.EdgeWeightTuple<Weighttype>> getConnectionsFromDirectInputToRelayNeurons() {
-            List<Neuroid.Helper.EdgeWeightTuple.NeuronAdress> directInputNeurons = getDirectInputNeurons();
-            List<Neuroid.Helper.EdgeWeightTuple.NeuronAdress> hiddenRelayNeurons = getHiddenRelayNeurons();
+            Set<Neuroid.Helper.EdgeWeightTuple.NeuronAdress> directInputNeurons = getDirectInputNeurons();
+            Set<Neuroid.Helper.EdgeWeightTuple.NeuronAdress> hiddenRelayNeurons = getHiddenRelayNeurons();
 
             return DistribuatorHelper.forEachInputChooseRandomOutput(directInputNeurons, hiddenRelayNeurons, weighttypeHelper.getValueForObject(1), random);
         }
 
         // output neurons aren't the network output neurons
         private List<Neuroid.Helper.EdgeWeightTuple<Weighttype>> getConnectionsFromRelayNeuronsToOutputNeurons() {
-            List<Neuroid.Helper.EdgeWeightTuple.NeuronAdress> hiddenRelayNeurons = getHiddenRelayNeurons();
-            List<Neuroid.Helper.EdgeWeightTuple.NeuronAdress> outputNeurons = getOutputNeurons();
+            Set<Neuroid.Helper.EdgeWeightTuple.NeuronAdress> hiddenRelayNeurons = getHiddenRelayNeurons();
+            Set<Neuroid.Helper.EdgeWeightTuple.NeuronAdress> outputNeurons = getOutputNeurons();
 
             return DistribuatorHelper.forEachInputChooseRandomOutput(hiddenRelayNeurons, outputNeurons, weighttypeHelper.getValueForObject(1), random);
         }
 
-        private List<Neuroid.Helper.EdgeWeightTuple.NeuronAdress> getHiddenRelayNeurons() {
-            List<Neuroid.Helper.EdgeWeightTuple.NeuronAdress> hiddenRelayNeurons = new ArrayList<>();
+        private Set<Neuroid.Helper.EdgeWeightTuple.NeuronAdress> getHiddenRelayNeurons() {
+            Set<Neuroid.Helper.EdgeWeightTuple.NeuronAdress> hiddenRelayNeurons = new HashSet<>();
 
             // the from numberOfOutputNeurons hidden neurons are relay neurons
 
@@ -103,8 +101,8 @@ public class Distributator {
             return hiddenRelayNeurons;
         }
 
-        private List<Neuroid.Helper.EdgeWeightTuple.NeuronAdress> getDirectInputNeurons() {
-            List<Neuroid.Helper.EdgeWeightTuple.NeuronAdress> directInputNeurons = new ArrayList<>();
+        private Set<Neuroid.Helper.EdgeWeightTuple.NeuronAdress> getDirectInputNeurons() {
+            Set<Neuroid.Helper.EdgeWeightTuple.NeuronAdress> directInputNeurons = new HashSet<>();
 
             for( int inputNeuronIndex = 0; inputNeuronIndex < inputneuronCount; inputNeuronIndex++ ) {
                 directInputNeurons.add(new Neuroid.Helper.EdgeWeightTuple.NeuronAdress(inputNeuronIndex, Neuroid.Helper.EdgeWeightTuple.NeuronAdress.EnumType.INPUT));
@@ -113,8 +111,8 @@ public class Distributator {
             return directInputNeurons;
         }
 
-        private List<Neuroid.Helper.EdgeWeightTuple.NeuronAdress> getOutputNeurons() {
-            List<Neuroid.Helper.EdgeWeightTuple.NeuronAdress> outputNeurons = new ArrayList<>();
+        private Set<Neuroid.Helper.EdgeWeightTuple.NeuronAdress> getOutputNeurons() {
+            Set<Neuroid.Helper.EdgeWeightTuple.NeuronAdress> outputNeurons = new HashSet<>();
 
             for( int i = 0; i < numberOfRelayneurons; i++ ) {
                 outputNeurons.add(new Neuroid.Helper.EdgeWeightTuple.NeuronAdress(i, Neuroid.Helper.EdgeWeightTuple.NeuronAdress.EnumType.HIDDEN));

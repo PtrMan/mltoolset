@@ -2,7 +2,9 @@ package ptrman.mltoolset.Neuroid.helper;
 
 import ptrman.mltoolset.Neuroid.Neuroid;
 
-import java.util.*;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 /**
  * Functionality to search Neuroids after criteria based on Neuroid, subsets and edges/synapses
@@ -28,6 +30,10 @@ public class Query {
         public FilterEdgeSourceQueryCommand(final Set<Neuroid<Weighttype, Modetype>> filteringNeuroidSet) {
             this.filteringNeuroidSet = filteringNeuroidSet;
         }
+    }
+
+    public static abstract class FilterEdgeByCondition<Weighttype, Modetype> extends QueryCommand<Weighttype, Modetype> {
+        public abstract boolean query(Neuroid.NeuroidGraph.Edge<Weighttype, Modetype> edge);
     }
 
     public static class QueryResult<Weighttype, Modetype> {
@@ -58,6 +64,18 @@ public class Query {
 
                 for( final Neuroid.NeuroidGraph.Edge<Weighttype, Modetype> iterationEdge : queryEdges ) {
                     if( castedCurrentCommand.filteringNeuroidSet.contains(iterationEdge.getSourceNode()) ) {
+                        workingEdgesSet.add(iterationEdge);
+                    }
+                }
+            }
+            else if( currentCommand instanceof FilterEdgeByCondition) {
+                FilterEdgeByCondition<Weighttype, Modetype> castedCurrentCommand = (FilterEdgeByCondition<Weighttype, Modetype>)currentCommand;
+
+                final Set<Neuroid.NeuroidGraph.Edge<Weighttype, Modetype>> queryEdges = workingEdgesSet;
+                workingEdgesSet = new HashSet<>();
+
+                for( final Neuroid.NeuroidGraph.Edge<Weighttype, Modetype> iterationEdge : queryEdges ) {
+                    if( castedCurrentCommand.query(iterationEdge) ) {
                         workingEdgesSet.add(iterationEdge);
                     }
                 }

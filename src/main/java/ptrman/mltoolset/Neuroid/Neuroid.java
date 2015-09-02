@@ -20,6 +20,7 @@ import static java.lang.Math.max;
  * 
  */
 public class Neuroid<Weighttype, ModeType> {
+
     public interface IWeighttypeHelper<Weighttype> {
         // deprecated
         public Weighttype getValueForZero();
@@ -63,6 +64,7 @@ public class Neuroid<Weighttype, ModeType> {
         // startstate
         public boolean firing = false;
         public boolean nextFiring = false;
+        public boolean[] firingHistory;
         /** \brief indicates if the neuron should fore on the next timestep, is updated by the update function */
         public int remainingLatency = 0;
         /** \brief as long as this is > 0 its mode nor its weights can be changed */
@@ -142,6 +144,8 @@ public class Neuroid<Weighttype, ModeType> {
     }
 
     public void timestep() {
+        updateFiringHistory();
+
         // order is important
 
         updateFiringForAllNeuroids();
@@ -149,18 +153,6 @@ public class Neuroid<Weighttype, ModeType> {
         updateNeuronStates();
         decreaseLatency();
     }
-
-
-    /*
-      uncommented because maybe not needed
-
-    // helper for JOIN operation
-    public void updateIncommingWeightsForNeuroids(final Set<NeuroidGraph.NeuronNode<Weighttype, ModeType>> neuroidsToUpdate) {
-        for( NeuroidGraph.NeuronNode<Weighttype, ModeType> iterationNeuroid : neuroidsToUpdate ) {
-            updateIncommingWeighsForNeuroid(iterationNeuroid);
-        }
-    }
-    */
 
     public void addConnections(List<NeuroidGraph.Edge<Weighttype, ModeType>> edges) {
         for( final NeuroidGraph.Edge<Weighttype, ModeType> edge : edges) {
@@ -255,11 +247,31 @@ public class Neuroid<Weighttype, ModeType> {
         }
     }
 
+    public void resizeFiringHistory(int firingHistoryLength) {
+        this.firingHistoryLength = firingHistoryLength;
+
+        for( NeuroidGraph.NeuronNode<Weighttype, ModeType> iterationNeuroid : neuroidsGraph.neuronNodes ) {
+            iterationNeuroid.graphElement.firingHistory = new boolean[firingHistoryLength];
+        }
+    }
+
     public NeuroidGraph<Weighttype, ModeType> getGraph() {
         return neuroidsGraph;
     }
 
-    private void updateNeuronStates() {
+    protected void updateFiringHistory() {
+        if( firingHistoryLength == 0 ) {
+            return;
+        }
+
+        for( NeuroidGraph.NeuronNode<Weighttype, ModeType> iterationNeuroid : neuroidsGraph.neuronNodes ) {
+            System.arraycopy(iterationNeuroid.graphElement.firingHistory, 0, iterationNeuroid.graphElement.firingHistory, 1, firingHistoryLength-1);
+
+            iterationNeuroid.graphElement.firingHistory[0] = iterationNeuroid.graphElement.firing;
+        }
+    }
+
+    protected void updateNeuronStates() {
         for( NeuroidGraph.NeuronNode<Weighttype, ModeType> iterationNeuron : neuroidsGraph.neuronNodes ) {
             // neurons with latency doesn't have to be updated
             if (iterationNeuron.graphElement.remainingLatency > 0) {
@@ -273,7 +285,7 @@ public class Neuroid<Weighttype, ModeType> {
     }
 
 
-    private void updateIncommingWeigthsForAllNeuroids() {
+    protected void updateIncommingWeigthsForAllNeuroids() {
         // add up the weights of the incomming edges
         for( int iterationNeuronI = 0; iterationNeuronI < neuroidsGraph.neuronNodes.length; iterationNeuronI++ ) {
             NeuroidGraph.NeuronNode<Weighttype, ModeType> iterationNeuroid = neuroidsGraph.neuronNodes[iterationNeuronI];
@@ -281,7 +293,7 @@ public class Neuroid<Weighttype, ModeType> {
         }
     }
 
-    private void updateIncommingWeighsForNeuroid(NeuroidGraph.NeuronNode<Weighttype, ModeType> neuroid) {
+    protected void updateIncommingWeighsForNeuroid(NeuroidGraph.NeuronNode<Weighttype, ModeType> neuroid) {
         Weighttype sumOfWeightsOfThisNeuron = weighttypeHelper.getValueForZero();
         Set<NeuroidGraph.Edge<Weighttype, ModeType>> incommingEdges = neuroidsGraph.graph.getInEdges(neuroid);
 
@@ -296,21 +308,23 @@ public class Neuroid<Weighttype, ModeType> {
         neuroid.graphElement.sumOfIncommingWeights = sumOfWeightsOfThisNeuron;
     }
 
-    private void updateFiringForAllNeuroids() {
+    protected void updateFiringForAllNeuroids() {
         for( NeuroidGraph.NeuronNode<Weighttype, ModeType> iterationNeuron : neuroidsGraph.neuronNodes ) {
             iterationNeuron.graphElement.updateFiring();
         }
     }
 
-    private void decreaseLatency() {
+    protected void decreaseLatency() {
         for( NeuroidGraph.NeuronNode<Weighttype, ModeType> iterationNeuronNode : neuroidsGraph.neuronNodes ) {
             iterationNeuronNode.graphElement.remainingLatency = max(iterationNeuronNode.graphElement.remainingLatency-1, 0);
         }
     }
 
-    public IUpdate update;
-    
-    private IWeighttypeHelper<Weighttype> weighttypeHelper;
+    protected int firingHistoryLength;
 
-    private NeuroidGraph<Weighttype, ModeType> neuroidsGraph = new NeuroidGraph();
+    public IUpdate update;
+
+    protected IWeighttypeHelper<Weighttype> weighttypeHelper;
+
+    protected NeuroidGraph<Weighttype, ModeType> neuroidsGraph = new NeuroidGraph();
 }
