@@ -47,6 +47,7 @@ public class Neuroid<Weighttype, MetaType> {
             }
 
             public Weighttype weight;
+            public int state; // state of the neruons, isnt touched by this core neuroid network
         }
 
         public NeuronNode<Weighttype, MetaType>[] outputNeuronNodes;
