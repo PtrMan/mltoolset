@@ -17,4 +17,6 @@ public enum EnumStandardNeuroidState {
     JoinEnhancedOperational,  //       used for the PJOIN algorithm
     LinkEnhancedPrepared,     //       used for the PJOIN algorithm
     LinkEnhancedLOperational, //       used for the PJOIN algorithm
+
+    JoinPOperational          //       used for the PJOIN algorithm
 }
