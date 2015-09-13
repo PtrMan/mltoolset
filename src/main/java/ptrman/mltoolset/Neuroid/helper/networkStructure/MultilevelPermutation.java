@@ -1,6 +1,9 @@
 package ptrman.mltoolset.Neuroid.helper.networkStructure;
 
+import ptrman.mltoolset.math.TruncatedFisherYades;
+
 import java.util.List;
+import java.util.Random;
 
 /**
  * Helper for calculating the index/adress of the permutation result over many permutations which are chained.
@@ -9,6 +12,13 @@ import java.util.List;
  * GPU: should fit into cache and be superfast because its just another "bitshifting" algorithm
  */
 public class MultilevelPermutation {
+    private static class TruncatedFisherYadesGenerator implements TruncatedFisherYades.IGenerator<Integer> {
+        @Override
+        public Integer generate(int index) {
+            return index;
+        }
+    }
+
     public static class Permutation {
         public int forward[];
         public int backward[];
@@ -31,6 +41,18 @@ public class MultilevelPermutation {
         }
 
         return result;
+    }
+
+    public static Permutation createPermutationFromRng(Random random, final int size) {
+        int[] forwardPermutation = new int[size];
+
+        TruncatedFisherYades<Integer> fisherYades = new TruncatedFisherYades(size, new TruncatedFisherYadesGenerator());
+
+        for( int i = 0; i < size; i++ ) {
+            forwardPermutation[i] = fisherYades.takeOne(random);
+        }
+        
+        return createPermutation(forwardPermutation);
     }
 
     public static int getMultilevelPermutationForward(final int index, final List<Permutation> permutationChain) {
