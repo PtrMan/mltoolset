@@ -58,7 +58,7 @@ public class NeuroidUnsupervisedLearningAlgorithms {
         }
 
         @Override
-        public void initialize(Neuroid.NeuroidGraph.NeuronNode<Integer, Integer> neuroid, List<Integer> updatedMode, List<Integer> updatedWeights) {
+        public void initialize(Neuroid.NeuroidGraph.NeuronNode<Integer, Integer> neuroid, List<Integer> updatedWeights) {
             neuroid.graphElement.state = EnumStandardNeuroidState.AvailableMemory.ordinal();
         }
     }
