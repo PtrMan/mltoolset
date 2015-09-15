@@ -168,9 +168,6 @@ public class TestNeuroidPredictiveJoinLearningAlgorithm {
             networkAccessor.getNeuroidAccessorByAdress(iterationANeuroidAdress).setNextFiring(false);
         }
 
-        System.out.print("---");
-        System.out.println();
-
         joinContext.network.timestep();
 
         // all neurons in z shouldn't fire
@@ -204,9 +201,6 @@ public class TestNeuroidPredictiveJoinLearningAlgorithm {
             networkAccessor.getNeuroidAccessorByAdress(iterationANeuroidAdress).setNextFiring(true);
         }
 
-        System.out.print("---");
-        System.out.println();
-
         joinContext.network.timestep();
 
         // all neurons in z shouldn't fire
@@ -239,9 +233,6 @@ public class TestNeuroidPredictiveJoinLearningAlgorithm {
         for( final NeuronAdress iterationANeuroidAdress : joinContext.b ) {
             networkAccessor.getNeuroidAccessorByAdress(iterationANeuroidAdress).setNextFiring(false);
         }
-
-        System.out.print("---");
-        System.out.println();
 
         joinContext.network.timestep();
 
