@@ -116,7 +116,7 @@ public class Network<Weighttype, MetaType> {
     public boolean[] getActiviationOfHiddenNeurons() {
         boolean[] activation = new boolean[neuroidAccessor.getNumberOfNeurons(NeuronAdress.EnumType.HIDDEN)];
 
-        for( int hiddenNeuronIndex = 0; hiddenNeuronIndex < 0; hiddenNeuronIndex++ ) {
+        for( int hiddenNeuronIndex = 0; hiddenNeuronIndex < activation.length; hiddenNeuronIndex++ ) {
             activation[hiddenNeuronIndex] = neuroidAccessor.getNeuroidAccessorByAdress(new NeuronAdress(hiddenNeuronIndex, NeuronAdress.EnumType.HIDDEN)).getFiring();
         }
 
