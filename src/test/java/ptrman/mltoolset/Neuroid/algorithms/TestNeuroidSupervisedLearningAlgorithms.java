@@ -2,8 +2,7 @@ package ptrman.mltoolset.Neuroid.algorithms;
 
 import org.junit.Assert;
 import org.junit.Test;
-import ptrman.mltoolset.Neuroid.IntegerWeightHelper;
-import ptrman.mltoolset.Neuroid.Neuroid;
+import ptrman.mltoolset.Neuroid.*;
 import ptrman.mltoolset.Neuroid.helper.EnumStandardNeuroidState;
 import ptrman.mltoolset.Neuroid.vincal.Distributator;
 
@@ -19,37 +18,43 @@ public class TestNeuroidSupervisedLearningAlgorithms {
         final int inputneuronCount = 5;
         final int numberOfRelayneurons = 7;
         final int numberOfOutputNeurons = 3;
-        Neuroid.IWeighttypeHelper weighttypeHelper = new IntegerWeightHelper();
+        IWeighttypeHelper weighttypeHelper = new IntegerWeightHelper();
 
         Distributator.IConnectorService<Integer> connectorService = new Distributator.SupervisedStandardConnectionService<>(inputneuronCount, numberOfRelayneurons, numberOfOutputNeurons, weighttypeHelper);
 
-        List<Neuroid.Helper.EdgeWeightTuple<Integer>> graphEdges = connectorService.createEdges(0, 0, 0, 0.0, new Random());
+        List<EdgeWeightTuple<Integer>> graphEdges = connectorService.createEdges(0, 0, 0, 0.0, new Random());
 
-        Neuroid<Integer, Integer> neuroid = new Neuroid<>(weighttypeHelper);
+        Network<Integer, Integer> network = new Network<>(weighttypeHelper, new DannNetworkAccessor<>());
 
-        neuroid.update = new NeuroidSupervisedLearningAlgorithms.Update();
+        network.update = new NeuroidSupervisedLearningAlgorithms.Update();
 
-        neuroid.allocateNeurons(numberOfRelayneurons + numberOfOutputNeurons, inputneuronCount, 0);
+        network.allocateNeurons(numberOfRelayneurons + numberOfOutputNeurons, inputneuronCount, 0);
+
+        INetworkAccessor<Integer, Integer> networkAccessor = network.getNetworkAccessor();
 
         for( int neuronI = 0; neuronI < numberOfRelayneurons; neuronI++ ) {
-            neuroid.getGraph().neuronNodes[neuronI].graphElement.threshold = 0xffff; // inf
-            neuroid.getGraph().neuronNodes[neuronI].graphElement.state = EnumStandardNeuroidState.UnsupervisedMemory.ordinal();
+            INeuronAccessor<Integer, Integer> neuroidAccessor = networkAccessor.getNeuroidAccessorByAdress(new NeuronAdress(neuronI, NeuronAdress.EnumType.HIDDEN));
+
+            neuroidAccessor.setThreshold(0xffff); // inf
+            neuroidAccessor.setState(EnumStandardNeuroidState.UnsupervisedMemory.ordinal());
         }
 
         for( int neuronI = numberOfRelayneurons; neuronI < numberOfRelayneurons+numberOfOutputNeurons; neuronI++ ) {
-            neuroid.getGraph().neuronNodes[neuronI].graphElement.threshold = 1;
-            neuroid.getGraph().neuronNodes[neuronI].graphElement.state = EnumStandardNeuroidState.Relay.ordinal();
+            INeuronAccessor<Integer, Integer> neuroidAccessor = networkAccessor.getNeuroidAccessorByAdress(new NeuronAdress(neuronI, NeuronAdress.EnumType.HIDDEN));
+
+            neuroidAccessor.setThreshold(1);
+            neuroidAccessor.setState(EnumStandardNeuroidState.Relay.ordinal());
         }
 
-        neuroid.addEdgeWeightTuples(graphEdges);
-        neuroid.initialize();
+        network.addEdgeWeightTuples(graphEdges);
+        network.initialize();
 
         boolean[] input = new boolean[inputneuronCount];
         boolean[] teachVector = new boolean[numberOfOutputNeurons];
         input[0] = true;
         teachVector[0] = true;
 
-        testPattern(input, teachVector, neuroid);
+        testPattern(input, teachVector, network);
     }
 
     @Test
@@ -57,37 +62,43 @@ public class TestNeuroidSupervisedLearningAlgorithms {
         final int inputneuronCount = 5;
         final int numberOfRelayneurons = 7;
         final int numberOfOutputNeurons = 3;
-        Neuroid.IWeighttypeHelper weighttypeHelper = new IntegerWeightHelper();
+        IWeighttypeHelper<Integer> weighttypeHelper = new IntegerWeightHelper();
 
         Distributator.IConnectorService<Integer> connectorService = new Distributator.SupervisedStandardConnectionService<>(inputneuronCount, numberOfRelayneurons, numberOfOutputNeurons, weighttypeHelper);
 
-        List<Neuroid.Helper.EdgeWeightTuple<Integer>> graphEdges = connectorService.createEdges(0, 0, 0, 0.0, new Random());
+        List<EdgeWeightTuple<Integer>> graphEdges = connectorService.createEdges(0, 0, 0, 0.0, new Random());
 
-        Neuroid<Integer, Integer> neuroid = new Neuroid<>(weighttypeHelper);
+        Network<Integer, Integer> network = new Network<>(weighttypeHelper, new DannNetworkAccessor<>());
 
-        neuroid.update = new NeuroidSupervisedLearningAlgorithms.Update();
+        network.update = new NeuroidSupervisedLearningAlgorithms.Update();
 
-        neuroid.allocateNeurons(numberOfRelayneurons + numberOfOutputNeurons, inputneuronCount, 0);
+        network.allocateNeurons(numberOfRelayneurons + numberOfOutputNeurons, inputneuronCount, 0);
+
+        INetworkAccessor<Integer, Integer> networkAccessor = network.getNetworkAccessor();
 
         for( int neuronI = 0; neuronI < numberOfRelayneurons; neuronI++ ) {
-            neuroid.getGraph().neuronNodes[neuronI].graphElement.threshold = 0xffff; // inf
-            neuroid.getGraph().neuronNodes[neuronI].graphElement.state = EnumStandardNeuroidState.UnsupervisedMemory.ordinal();
+            INeuronAccessor<Integer, Integer> neuroidAccessor = networkAccessor.getNeuroidAccessorByAdress(new NeuronAdress(neuronI, NeuronAdress.EnumType.HIDDEN));
+
+            neuroidAccessor.setThreshold(0xffff); // inf
+            neuroidAccessor.setState(EnumStandardNeuroidState.UnsupervisedMemory.ordinal());
         }
 
         for( int neuronI = numberOfRelayneurons; neuronI < numberOfRelayneurons+numberOfOutputNeurons; neuronI++ ) {
-            neuroid.getGraph().neuronNodes[neuronI].graphElement.threshold = 1;
-            neuroid.getGraph().neuronNodes[neuronI].graphElement.state = EnumStandardNeuroidState.Relay.ordinal();
+            INeuronAccessor<Integer, Integer> neuroidAccessor = networkAccessor.getNeuroidAccessorByAdress(new NeuronAdress(neuronI, NeuronAdress.EnumType.HIDDEN));
+
+            neuroidAccessor.setThreshold(1);
+            neuroidAccessor.setState(EnumStandardNeuroidState.Relay.ordinal());
         }
 
-        neuroid.addEdgeWeightTuples(graphEdges);
-        neuroid.initialize();
+        network.addEdgeWeightTuples(graphEdges);
+        network.initialize();
 
         boolean[] input = new boolean[inputneuronCount];
         boolean[] teachVector = new boolean[numberOfOutputNeurons];
         input[0] = true;
         teachVector[0] = true;
 
-        testPattern(input, teachVector, neuroid);
+        testPattern(input, teachVector, network);
 
         input = new boolean[inputneuronCount];
         teachVector = new boolean[numberOfOutputNeurons];
@@ -95,49 +106,53 @@ public class TestNeuroidSupervisedLearningAlgorithms {
         input[1] = true;
         teachVector[1] = true;
 
-        testPattern(input, teachVector, neuroid);
+        testPattern(input, teachVector, network);
     }
 
-    private void testPattern(final boolean[] input, final boolean[] teachVector, Neuroid<Integer, Integer> neuroid) {
+    private void testPattern(final boolean[] input, final boolean[] teachVector, Network<Integer, Integer> network) {
+        INetworkAccessor<Integer, Integer> networkAccessor = network.getNetworkAccessor();
+
         for( int i = 0; i < input.length; i++ ) {
-            neuroid.setActivationOfInputNeuron(i, input[i]);
+            network.setActivationOfInputNeuron(i, input[i]);
         }
-        neuroid.setActivationOfInputNeuron(0, true);
+        network.setActivationOfInputNeuron(0, true);
 
         // two because the relay neuron delays one step
-        neuroid.timestep();
-        neuroid.timestep();
+        network.timestep();
+        network.timestep();
 
         for( int i = 0; i < teachVector.length; i++ ) {
             if( teachVector[i] ) {
-                neuroid.getGraph().neuronNodes[i].graphElement.state = EnumStandardNeuroidState.UnsuperviseMemoryFired.ordinal();
+                INeuronAccessor<Integer, Integer> neuroidAccessor = networkAccessor.getNeuroidAccessorByAdress(new NeuronAdress(i, NeuronAdress.EnumType.HIDDEN));
+                neuroidAccessor.setState(EnumStandardNeuroidState.UnsuperviseMemoryFired.ordinal());
             }
         }
 
-        neuroid.timestep();
+        network.timestep();
 
         // now it should have learned it...test if its the case
 
         for( int i = 0; i < input.length; i++ ) {
-            neuroid.setActivationOfInputNeuron(i, false);
+            network.setActivationOfInputNeuron(i, false);
         }
 
-        neuroid.timestep();
-        neuroid.timestep();
-        neuroid.timestep();
+        network.timestep();
+        network.timestep();
+        network.timestep();
 
         for( int i = 0; i < input.length; i++ ) {
-            neuroid.setActivationOfInputNeuron(i, input[i]);
+            network.setActivationOfInputNeuron(i, input[i]);
         }
 
-        neuroid.timestep();
-        neuroid.timestep();
-        neuroid.timestep();
+        network.timestep();
+        network.timestep();
+        network.timestep();
 
         // check if its set
         for( int i = 0; i < teachVector.length; i++ ) {
             if( teachVector[i] ) {
-                Assert.assertTrue(neuroid.getGraph().neuronNodes[i].graphElement.firing);
+                INeuronAccessor<Integer, Integer> neuroidAccessor = networkAccessor.getNeuroidAccessorByAdress(new NeuronAdress(i, NeuronAdress.EnumType.HIDDEN));
+                Assert.assertTrue(neuroidAccessor.getFiring());
             }
         }
     }

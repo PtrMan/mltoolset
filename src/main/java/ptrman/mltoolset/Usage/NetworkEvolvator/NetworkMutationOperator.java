@@ -2,7 +2,8 @@ package ptrman.mltoolset.Usage.NetworkEvolvator;
 
 
 import org.uncommons.watchmaker.framework.EvolutionaryOperator;
-import ptrman.mltoolset.Neuroid.Neuroid;
+import ptrman.mltoolset.Neuroid.EdgeWeightTuple;
+import ptrman.mltoolset.Neuroid.NeuronAdress;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -46,11 +47,11 @@ public class NetworkMutationOperator implements EvolutionaryOperator<NetworkGene
             for( int tryCounter = 0; tryCounter < NUMBER_OF_TRIES; tryCounter++ ) {
                 boolean connectionExists = false;
 
-                final Neuroid.Helper.EdgeWeightTuple.NeuronAdress.EnumType sourceType = random.nextInt(2) == 0 ? Neuroid.Helper.EdgeWeightTuple.NeuronAdress.EnumType.INPUT : Neuroid.Helper.EdgeWeightTuple.NeuronAdress.EnumType.HIDDEN;
+                final NeuronAdress.EnumType sourceType = random.nextInt(2) == 0 ? NeuronAdress.EnumType.INPUT : NeuronAdress.EnumType.HIDDEN;
 
                 final int sourceIndex, destinationIndex;
 
-                if( sourceType == Neuroid.Helper.EdgeWeightTuple.NeuronAdress.EnumType.HIDDEN ) {
+                if( sourceType == NeuronAdress.EnumType.HIDDEN ) {
                     List<Integer> neuronIndices = getTwoDisjunctNumbers(random, chosenMutationGeneticExpression.neuronCandidatesActive.length);
 
                     sourceIndex = neuronIndices.get(0);
@@ -62,8 +63,8 @@ public class NetworkMutationOperator implements EvolutionaryOperator<NetworkGene
                     destinationIndex = random.nextInt(chosenMutationGeneticExpression.neuronCandidatesActive.length);
                 }
 
-                for( final Neuroid.Helper.EdgeWeightTuple<Float> iterationConnection : chosenMutationGeneticExpression.connectionsWithWeights ) {
-                    if( iterationConnection.sourceAdress.equals(new Neuroid.Helper.EdgeWeightTuple.NeuronAdress(sourceIndex, sourceType)) && iterationConnection.destinationAdress.equals(new Neuroid.Helper.EdgeWeightTuple.NeuronAdress(destinationIndex, Neuroid.Helper.EdgeWeightTuple.NeuronAdress.EnumType.HIDDEN)) ) {
+                for( final EdgeWeightTuple<Float> iterationConnection : chosenMutationGeneticExpression.connectionsWithWeights ) {
+                    if( iterationConnection.sourceAdress.equals(new NeuronAdress(sourceIndex, sourceType)) && iterationConnection.destinationAdress.equals(new NeuronAdress(destinationIndex, NeuronAdress.EnumType.HIDDEN)) ) {
                         connectionExists = true;
                         break;
                     }
@@ -73,7 +74,7 @@ public class NetworkMutationOperator implements EvolutionaryOperator<NetworkGene
                     continue;
                 }
 
-                chosenMutationGeneticExpression.connectionsWithWeights.add(new Neuroid.Helper.EdgeWeightTuple<>(new Neuroid.Helper.EdgeWeightTuple.NeuronAdress(sourceIndex, sourceType), new Neuroid.Helper.EdgeWeightTuple.NeuronAdress(destinationIndex, Neuroid.Helper.EdgeWeightTuple.NeuronAdress.EnumType.HIDDEN), 0.5f));
+                chosenMutationGeneticExpression.connectionsWithWeights.add(new EdgeWeightTuple<>(new NeuronAdress(sourceIndex, sourceType), new NeuronAdress(destinationIndex, NeuronAdress.EnumType.HIDDEN), 0.5f));
 
                 addedConnection = true;
 

@@ -2,8 +2,8 @@ package ptrman.mltoolset.Neuroid.algorithms;
 
 import org.junit.Assert;
 import org.junit.Test;
-import ptrman.mltoolset.Neuroid.FloatWeightHelper;
-import ptrman.mltoolset.Neuroid.Neuroid;
+import ptrman.mltoolset.Neuroid.*;
+import ptrman.mltoolset.Neuroid.algorithms.NeuroidPredictiveJoinLearningAlgorithm.MetaType;
 import ptrman.mltoolset.Neuroid.helper.EnumStandardNeuroidState;
 import ptrman.mltoolset.Neuroid.vincal.DistribuatorHelper;
 import ptrman.mltoolset.Neuroid.vincal.INeuroidAllocator;
@@ -16,51 +16,58 @@ import java.util.*;
  */
 public class TestNeuroidPredictiveJoinLearningAlgorithm {
     private static class UnittestExposedNeuroidPredictiveJoinLearningAlgorithm extends NeuroidPredictiveJoinLearningAlgorithm {
-        public UnittestExposedNeuroidPredictiveJoinLearningAlgorithm(INeuroidAllocator<Float, Integer> neuroidAllocator, int r, int joinK, int linkK, float T, Neuroid<Float, Integer> network) {
+        public UnittestExposedNeuroidPredictiveJoinLearningAlgorithm(INeuroidAllocator<Float, MetaType> neuroidAllocator, int r, int joinK, int linkK, float T, Network<Float, MetaType> network) {
             super(neuroidAllocator, r, joinK, linkK, T, network);
         }
 
 
-        public final void joinEnhanced(final Set<Neuroid.NeuroidGraph.NeuronNode<Float, Integer>> a, final Set<Neuroid.NeuroidGraph.NeuronNode<Float, Integer>> b) {
-            super.joinEnhanced(a, b);
+        public final Set<NeuronAdress> joinEnhanced(final Set<NeuronAdress> a, final Set<NeuronAdress> b) {
+            return super.joinEnhanced(a, b);
         }
     }
 
     private static class UnittestNeuroidAllocator implements INeuroidAllocator {
-        public UnittestNeuroidAllocator(Neuroid<Float, Integer> network) {
+        public UnittestNeuroidAllocator(Network<Float, MetaType> network) {
             this.network = network;
         }
 
         @Override
-        public Set<Neuroid.NeuroidGraph.NeuronNode> allocateNeuroidsWithConstraintsConnectedToBothInputsAndWithAtLeastNSynapsesToBoth(Set a, Set b, int numberOfResultNeuroids, int k) {
-            Set<Neuroid.NeuroidGraph.NeuronNode> resultNeuroidSet = new HashSet<>();
+        public Set<NeuronAdress> allocateNeuroidsWithConstraintsConnectedToBothInputsAndWithAtLeastNSynapsesToBoth(Set a, Set b, int numberOfResultNeuroids, int k) {
+            Set<NeuronAdress> resultNeuroidSet = new HashSet<>();
 
             // we return the last 5 neurons for "z"
 
             for( int neuroidI = 5*2; neuroidI < 5*3; neuroidI++ ) {
-                resultNeuroidSet.add(network.getGraph().neuronNodes[neuroidI]);
+                resultNeuroidSet.add(new NeuronAdress(neuroidI, NeuronAdress.EnumType.HIDDEN));
             }
 
             return resultNeuroidSet;
         }
 
-        private final Neuroid<Float, Integer> network;
+        private final Network<Float, MetaType> network;
 
     }
 
-    private static class JoinContext {
-        Set<Neuroid.NeuroidGraph.NeuronNode<Float, Integer>> a;
-        Set<Neuroid.NeuroidGraph.NeuronNode<Float, Integer>> b;
+    /*
+    private static class SparseIncrementalTryNeuroidAllocator implements INeuroidAllocator<Float, MetaType> {
 
-        Neuroid<Float, Integer> network;
+    }
+    */
+
+
+    private static class JoinContext {
+        Set<NeuronAdress> a;
+        Set<NeuronAdress> b;
+
+        Network<Float, MetaType> network;
     }
 
 
     private static class LinkContext {
-        Set<Neuroid.NeuroidGraph.NeuronNode<Float, Integer>> a;
-        Set<Neuroid.NeuroidGraph.NeuronNode<Float, Integer>> b;
+        Set<NeuronAdress> a;
+        Set<NeuronAdress> b;
 
-        Neuroid<Float, Integer> network;
+        Network<Float, MetaType> network;
     }
 
 
@@ -77,16 +84,19 @@ public class TestNeuroidPredictiveJoinLearningAlgorithm {
 
         JoinContext joinContext = joinCreateNetworkAndDoJoinOperation(numberOfNeuronsInGroup, r, joinK, linkK, T);
 
+        INetworkAccessor<Float, MetaType> networkAccessor = joinContext.network.getNetworkAccessor();
 
         // check for at least one neuron in "z" which is in the Operational state
-        final Set<Neuroid.NeuroidGraph.NeuronNode<Float, Integer>> z = getNeuroidsSet(joinContext.network, 0, numberOfNeuronsInGroup, 2);
+        final Set<NeuronAdress> z = getNeuroidsSet(0, numberOfNeuronsInGroup, 2);
 
         boolean atLeastOneResultNeuroidInOperationalState = false;
 
-        for( Neuroid.NeuroidGraph.NeuronNode<Float, Integer> iterationNeuroid : z ) {
-            System.out.println(iterationNeuroid.graphElement.state);
+        for( final NeuronAdress iterationNeuroidAdress : z ) {
+            INeuronAccessor<Float, MetaType> neuronAccessor = networkAccessor.getNeuroidAccessorByAdress(iterationNeuroidAdress);
 
-            if( iterationNeuroid.graphElement.state == EnumStandardNeuroidState.JoinEnhancedOperational.ordinal() ) {
+            System.out.println(neuronAccessor.getState());
+
+            if( neuronAccessor.getState() == EnumStandardNeuroidState.JoinEnhancedOperational.ordinal() ) {
                 atLeastOneResultNeuroidInOperationalState = true;
                 break;
             }
@@ -106,26 +116,28 @@ public class TestNeuroidPredictiveJoinLearningAlgorithm {
 
         JoinContext joinContext = joinCreateNetworkAndDoJoinOperation(numberOfNeuronsInGroup, r, joinK, linkK, T);
 
+        INetworkAccessor<Float, MetaType> networkAccessor = joinContext.network.getNetworkAccessor();
+
         // neurons in z should be in Operational state, is not checked
 
         // let all inputs fire and look if the result fires
-        for( Neuroid.NeuroidGraph.NeuronNode<Float, Integer> iterationANeuroid : joinContext.a ) {
-            iterationANeuroid.graphElement.nextFiring = true;
+        for( final NeuronAdress iterationANeuroidAdress : joinContext.a ) {
+            networkAccessor.getNeuroidAccessorByAdress(iterationANeuroidAdress).setNextFiring(true);
         }
-        for( Neuroid.NeuroidGraph.NeuronNode<Float, Integer> iterationANeuroid : joinContext.b ) {
-            iterationANeuroid.graphElement.nextFiring = true;
+        for( final NeuronAdress iterationANeuroidAdress : joinContext.b ) {
+            networkAccessor.getNeuroidAccessorByAdress(iterationANeuroidAdress).setNextFiring(true);
         }
 
         joinContext.network.timestep();
 
         // at least one neuron should fire
 
-        final Set<Neuroid.NeuroidGraph.NeuronNode<Float, Integer>> z = getNeuroidsSet(joinContext.network, 0, numberOfNeuronsInGroup, 2);
+        final Set<NeuronAdress> z = getNeuroidsSet(0, numberOfNeuronsInGroup, 2);
 
         boolean atLeastOneNeuroidInZFiring = false;
 
-        for( Neuroid.NeuroidGraph.NeuronNode<Float, Integer> iterationNeuroid : z ) {
-            if( iterationNeuroid.graphElement.nextFiring ) {
+        for( final NeuronAdress iterationNeuroidAdress : z ) {
+            if( networkAccessor.getNeuroidAccessorByAdress(iterationNeuroidAdress).getNextFiring() ) {
                 atLeastOneNeuroidInZFiring = true;
                 break;
             }
@@ -145,14 +157,15 @@ public class TestNeuroidPredictiveJoinLearningAlgorithm {
 
         JoinContext joinContext = joinCreateNetworkAndDoJoinOperation(numberOfNeuronsInGroup, r, joinK, linkK, T);
 
+        INetworkAccessor<Float, MetaType> networkAccessor = joinContext.network.getNetworkAccessor();
+
         // neurons in z should be in Operational state, is not checked
 
-        // let all inputs fire and look if the result fires
-        for( Neuroid.NeuroidGraph.NeuronNode<Float, Integer> iterationANeuroid : joinContext.a ) {
-            iterationANeuroid.graphElement.nextFiring = true;
+        for( final NeuronAdress iterationANeuroidAdress : joinContext.a ) {
+            networkAccessor.getNeuroidAccessorByAdress(iterationANeuroidAdress).setNextFiring(true);
         }
-        for( Neuroid.NeuroidGraph.NeuronNode<Float, Integer> iterationANeuroid : joinContext.b ) {
-            iterationANeuroid.graphElement.nextFiring = false;
+        for( final NeuronAdress iterationANeuroidAdress : joinContext.b ) {
+            networkAccessor.getNeuroidAccessorByAdress(iterationANeuroidAdress).setNextFiring(false);
         }
 
         System.out.print("---");
@@ -162,10 +175,10 @@ public class TestNeuroidPredictiveJoinLearningAlgorithm {
 
         // all neurons in z shouldn't fire
 
-        final Set<Neuroid.NeuroidGraph.NeuronNode<Float, Integer>> z = getNeuroidsSet(joinContext.network, 0, numberOfNeuronsInGroup, 2);
+        final Set<NeuronAdress> z = getNeuroidsSet(0, numberOfNeuronsInGroup, 2);
 
-        for( Neuroid.NeuroidGraph.NeuronNode<Float, Integer> iterationNeuroid : z ) {
-            Assert.assertFalse(iterationNeuroid.graphElement.nextFiring);
+        for( final NeuronAdress iterationNeuroidAdress : z ) {
+            Assert.assertFalse(networkAccessor.getNeuroidAccessorByAdress(iterationNeuroidAdress).getNextFiring());
         }
     }
 
@@ -180,14 +193,15 @@ public class TestNeuroidPredictiveJoinLearningAlgorithm {
 
         JoinContext joinContext = joinCreateNetworkAndDoJoinOperation(numberOfNeuronsInGroup, r, joinK, linkK, T);
 
+        INetworkAccessor<Float, MetaType> networkAccessor = joinContext.network.getNetworkAccessor();
+
         // neurons in z should be in Operational state, is not checked
 
-        // let all inputs fire and look if the result fires
-        for( Neuroid.NeuroidGraph.NeuronNode<Float, Integer> iterationANeuroid : joinContext.a ) {
-            iterationANeuroid.graphElement.nextFiring = false;
+        for( final NeuronAdress iterationANeuroidAdress : joinContext.a ) {
+            networkAccessor.getNeuroidAccessorByAdress(iterationANeuroidAdress).setNextFiring(false);
         }
-        for( Neuroid.NeuroidGraph.NeuronNode<Float, Integer> iterationANeuroid : joinContext.b ) {
-            iterationANeuroid.graphElement.nextFiring = true;
+        for( final NeuronAdress iterationANeuroidAdress : joinContext.b ) {
+            networkAccessor.getNeuroidAccessorByAdress(iterationANeuroidAdress).setNextFiring(true);
         }
 
         System.out.print("---");
@@ -197,10 +211,10 @@ public class TestNeuroidPredictiveJoinLearningAlgorithm {
 
         // all neurons in z shouldn't fire
 
-        final Set<Neuroid.NeuroidGraph.NeuronNode<Float, Integer>> z = getNeuroidsSet(joinContext.network, 0, numberOfNeuronsInGroup, 2);
+        final Set<NeuronAdress> z = getNeuroidsSet(0, numberOfNeuronsInGroup, 2);
 
-        for( Neuroid.NeuroidGraph.NeuronNode<Float, Integer> iterationNeuroid : z ) {
-            Assert.assertFalse(iterationNeuroid.graphElement.nextFiring);
+        for( final NeuronAdress iterationNeuroidAdress : z ) {
+            Assert.assertFalse(networkAccessor.getNeuroidAccessorByAdress(iterationNeuroidAdress).getNextFiring());
         }
     }
 
@@ -215,14 +229,15 @@ public class TestNeuroidPredictiveJoinLearningAlgorithm {
 
         JoinContext joinContext = joinCreateNetworkAndDoJoinOperation(numberOfNeuronsInGroup, r, joinK, linkK, T);
 
+        INetworkAccessor<Float, MetaType> networkAccessor = joinContext.network.getNetworkAccessor();
+
         // neurons in z should be in Operational state, is not checked
 
-        // let all inputs fire and look if the result fires
-        for( Neuroid.NeuroidGraph.NeuronNode<Float, Integer> iterationANeuroid : joinContext.a ) {
-            iterationANeuroid.graphElement.nextFiring = false;
+        for( final NeuronAdress iterationANeuroidAdress : joinContext.a ) {
+            networkAccessor.getNeuroidAccessorByAdress(iterationANeuroidAdress).setNextFiring(false);
         }
-        for( Neuroid.NeuroidGraph.NeuronNode<Float, Integer> iterationANeuroid : joinContext.b ) {
-            iterationANeuroid.graphElement.nextFiring = false;
+        for( final NeuronAdress iterationANeuroidAdress : joinContext.b ) {
+            networkAccessor.getNeuroidAccessorByAdress(iterationANeuroidAdress).setNextFiring(false);
         }
 
         System.out.print("---");
@@ -232,10 +247,10 @@ public class TestNeuroidPredictiveJoinLearningAlgorithm {
 
         // all neurons in z shouldn't fire
 
-        final Set<Neuroid.NeuroidGraph.NeuronNode<Float, Integer>> z = getNeuroidsSet(joinContext.network, 0, numberOfNeuronsInGroup, 2);
+        final Set<NeuronAdress> z = getNeuroidsSet(0, numberOfNeuronsInGroup, 2);
 
-        for( Neuroid.NeuroidGraph.NeuronNode<Float, Integer> iterationNeuroid : z ) {
-            Assert.assertFalse(iterationNeuroid.graphElement.nextFiring);
+        for( final NeuronAdress iterationNeuroidAdress : z ) {
+            Assert.assertFalse(networkAccessor.getNeuroidAccessorByAdress(iterationNeuroidAdress).getNextFiring());
         }
     }
 
@@ -250,9 +265,11 @@ public class TestNeuroidPredictiveJoinLearningAlgorithm {
 
         LinkContext linkContext = linkCreateNetworkAndDoLinkOperation(numberOfNeuronsInGroup, numberOfRelayNeuroids, r, joinK, linkK, T);
 
+        INetworkAccessor<Float, MetaType> networkAccessor = linkContext.network.getNetworkAccessor();
+
         // let all input fire and look if the result fires
-        for( Neuroid.NeuroidGraph.NeuronNode<Float, Integer> iterationANeuroid : linkContext.a ) {
-            iterationANeuroid.graphElement.nextFiring = true;
+        for( final NeuronAdress iterationANeuroidAdress : linkContext.a ) {
+            networkAccessor.getNeuroidAccessorByAdress(iterationANeuroidAdress).setNextFiring(true);
         }
 
         linkContext.network.timestep();
@@ -261,12 +278,12 @@ public class TestNeuroidPredictiveJoinLearningAlgorithm {
         // at least one neuron should fire
 
         // TODO< adressing is wrong, but works fine if the number of numberOfNeuronsInGroup is equal to the number of relay neurons >
-        final Set<Neuroid.NeuroidGraph.NeuronNode<Float, Integer>> b = getNeuroidsSet(linkContext.network, 0, numberOfNeuronsInGroup, 2);
+        final Set<NeuronAdress> b = getNeuroidsSet(0, numberOfNeuronsInGroup, 2);
 
         boolean atLeastOneNeuroidInBFiring = false;
 
-        for( Neuroid.NeuroidGraph.NeuronNode<Float, Integer> iterationNeuroid : b ) {
-            if( iterationNeuroid.graphElement.nextFiring ) {
+        for( final NeuronAdress iterationNeuroid : b ) {
+            if( networkAccessor.getNeuroidAccessorByAdress(iterationNeuroid).getNextFiring() ) {
                 atLeastOneNeuroidInBFiring = true;
                 break;
             }
@@ -279,16 +296,20 @@ public class TestNeuroidPredictiveJoinLearningAlgorithm {
     private static JoinContext joinCreateNetworkAndDoJoinOperation(int numberOfNeuronsInGroup, int r, int joinK, int linkK, float T) {
         Random random = new Random(4223);
 
-        Neuroid<Float, Integer> network = new Neuroid<>(new FloatWeightHelper());
+        Network<Float, MetaType> network = new Network<>(new FloatWeightHelper(), new DannNetworkAccessor<>());
         network.update = new NeuroidPredictiveJoinLearningAlgorithm.DummyUpdate();
+
+        INetworkAccessor<Float, MetaType> networkAccessor = network.getNetworkAccessor();
 
         // first 5 neurons are "a", next are "b", next are "z"
         network.allocateNeurons(numberOfNeuronsInGroup + numberOfNeuronsInGroup + numberOfNeuronsInGroup, 0, 0);
 
         for( int neuronI = 0; neuronI < numberOfNeuronsInGroup*3; neuronI++ ) {
-            network.getGraph().neuronNodes[neuronI].graphElement.threshold = T;
+            INeuronAccessor<Float, MetaType> neuronAccessor = networkAccessor.getNeuroidAccessorByAdress(new NeuronAdress(neuronI, NeuronAdress.EnumType.HIDDEN));
+
+            neuronAccessor.setThreshold(T);
             // just a standard state
-            network.getGraph().neuronNodes[neuronI].graphElement.state = EnumStandardNeuroidState.AvailableMemory.ordinal();
+            neuronAccessor.setState(EnumStandardNeuroidState.AvailableMemory.ordinal());
         }
 
         // we have to do this after allocating the neuroids
@@ -298,13 +319,13 @@ public class TestNeuroidPredictiveJoinLearningAlgorithm {
 
 
         // generate edges
-        final List<Neuroid.Helper.EdgeWeightTuple<Float>> networkEdges = generateEdgesForJoinTestNetwork(random, numberOfNeuronsInGroup, joinK, T);
+        final List<EdgeWeightTuple<Float>> networkEdges = generateEdgesForJoinTestNetwork(random, numberOfNeuronsInGroup, joinK, T);
         network.addEdgeWeightTuples(networkEdges);
 
         network.initialize();
 
-        final Set<Neuroid.NeuroidGraph.NeuronNode<Float, Integer>> a = getNeuroidsSet(network, 0, numberOfNeuronsInGroup, 0);
-        final Set<Neuroid.NeuroidGraph.NeuronNode<Float, Integer>> b = getNeuroidsSet(network, 0, numberOfNeuronsInGroup, 1);
+        final Set<NeuronAdress> a = getNeuroidsSet(0, numberOfNeuronsInGroup, 0);
+        final Set<NeuronAdress> b = getNeuroidsSet(0, numberOfNeuronsInGroup, 1);
 
         // do actual test
         predictiveJoinLearningAlgorithm.joinEnhanced(a, b);
@@ -320,27 +341,36 @@ public class TestNeuroidPredictiveJoinLearningAlgorithm {
     private static LinkContext linkCreateNetworkAndDoLinkOperation(int numberOfNeuronsInGroup, int numberOfRelayNeuroids, int r, int joinK, int linkK, float T) {
         Random random = new Random(4223);
 
-        Neuroid<Float, Integer> network = new Neuroid<>(new FloatWeightHelper());
+        Network<Float, MetaType> network = new Network<>(new FloatWeightHelper(), new DannNetworkAccessor<>());
         network.update = new NeuroidPredictiveJoinLearningAlgorithm.DummyUpdate();
+
+        INetworkAccessor<Float, MetaType> networkAccessor = network.getNetworkAccessor();
 
         // first 5 neurons are "a", next are "relay", next are "b"
         network.allocateNeurons(numberOfNeuronsInGroup + numberOfRelayNeuroids + numberOfNeuronsInGroup, 0, 0);
 
         for( int neuronI = 0; neuronI < numberOfNeuronsInGroup; neuronI++ ) {
-            network.getGraph().neuronNodes[neuronI].graphElement.threshold = T;
+            INeuronAccessor<Float, MetaType> neuronAccessor = networkAccessor.getNeuroidAccessorByAdress(new NeuronAdress(neuronI, NeuronAdress.EnumType.HIDDEN));
+
+            neuronAccessor.setThreshold(T);
             // just a standard state
-            network.getGraph().neuronNodes[neuronI].graphElement.state = EnumStandardNeuroidState.AvailableMemory.ordinal();
+            neuronAccessor.setState(EnumStandardNeuroidState.AvailableMemory.ordinal());
         }
 
         for( int neuronI = numberOfNeuronsInGroup; neuronI < numberOfNeuronsInGroup + numberOfRelayNeuroids; neuronI++ ) {
-            network.getGraph().neuronNodes[neuronI].graphElement.threshold = T;
-            network.getGraph().neuronNodes[neuronI].graphElement.state = EnumStandardNeuroidState.Relay.ordinal();
+            INeuronAccessor<Float, MetaType> neuronAccessor = networkAccessor.getNeuroidAccessorByAdress(new NeuronAdress(neuronI, NeuronAdress.EnumType.HIDDEN));
+
+            neuronAccessor.setThreshold(T);
+            // just a standard state
+            neuronAccessor.setState(EnumStandardNeuroidState.Relay.ordinal());
         }
 
         for( int neuronI = numberOfNeuronsInGroup + numberOfRelayNeuroids; neuronI < numberOfNeuronsInGroup + numberOfRelayNeuroids + numberOfNeuronsInGroup; neuronI++ ) {
-            network.getGraph().neuronNodes[neuronI].graphElement.threshold = T;
+            INeuronAccessor<Float, MetaType> neuronAccessor = networkAccessor.getNeuroidAccessorByAdress(new NeuronAdress(neuronI, NeuronAdress.EnumType.HIDDEN));
+
+            neuronAccessor.setThreshold(T);
             // just a standard state
-            network.getGraph().neuronNodes[neuronI].graphElement.state = EnumStandardNeuroidState.AvailableMemory.ordinal();
+            neuronAccessor.setState(EnumStandardNeuroidState.AvailableMemory.ordinal());
         }
 
         // required for link functionality!
@@ -353,11 +383,11 @@ public class TestNeuroidPredictiveJoinLearningAlgorithm {
         UnittestExposedNeuroidPredictiveJoinLearningAlgorithm predictiveJoinLearningAlgorithm = new UnittestExposedNeuroidPredictiveJoinLearningAlgorithm(neuroidAllocator, r, joinK, linkK, T, network);
 
 
-        Set<Neuroid.NeuroidGraph.NeuronNode<Float, Integer>> globalRelayNeuroids = new HashSet<>();
+        Set<NeuronAdress> globalRelayNeuroids = new HashSet<>();
 
         // fill relay neuroid set
         for( int neuronI = numberOfNeuronsInGroup; neuronI < numberOfNeuronsInGroup + numberOfRelayNeuroids; neuronI++ ) {
-            globalRelayNeuroids.add(network.getGraph().neuronNodes[neuronI]);
+            globalRelayNeuroids.add(new NeuronAdress(neuronI, NeuronAdress.EnumType.HIDDEN));
         }
 
         predictiveJoinLearningAlgorithm.setGlobalRelayNeuroids(globalRelayNeuroids);
@@ -365,14 +395,14 @@ public class TestNeuroidPredictiveJoinLearningAlgorithm {
 
 
         // generate edges
-        final List<Neuroid.Helper.EdgeWeightTuple<Float>> networkEdges = generateEdgesForLinkTestNetwork(random, network, numberOfNeuronsInGroup, numberOfRelayNeuroids, T);
+        final List<EdgeWeightTuple<Float>> networkEdges = generateEdgesForLinkTestNetwork(random, network, numberOfNeuronsInGroup, numberOfRelayNeuroids, T);
         network.addEdgeWeightTuples(networkEdges);
 
         network.initialize();
 
         // TODO< adressing is wrong, but works fine if the number of numberOfNeuronsInGroup is equal to the number of relay neurons >
-        final Set<Neuroid.NeuroidGraph.NeuronNode<Float, Integer>> a = getNeuroidsSet(network, 0, numberOfNeuronsInGroup, 0);
-        final Set<Neuroid.NeuroidGraph.NeuronNode<Float, Integer>> b = getNeuroidsSet(network, 0, numberOfNeuronsInGroup, 2);
+        final Set<NeuronAdress> a = getNeuroidsSet(0, numberOfNeuronsInGroup, 0);
+        final Set<NeuronAdress> b = getNeuroidsSet(0, numberOfNeuronsInGroup, 2);
 
         // do actual test
         predictiveJoinLearningAlgorithm.linkEnhanced(a, b);
@@ -386,16 +416,12 @@ public class TestNeuroidPredictiveJoinLearningAlgorithm {
 
     }
 
-    private static List<Neuroid.Helper.EdgeWeightTuple<Float>> generateEdgesForLinkTestNetwork(Random random, Neuroid<Float, Integer> network, int numberOfNeuronsInGroup, int numberOfRelayNeuroids, float T) {
-        final Set<Neuroid.NeuroidGraph.NeuronNode<Float, Integer>> a = getNeuroidsSet(network, 0, numberOfNeuronsInGroup, 0);
-        final Set<Neuroid.NeuroidGraph.NeuronNode<Float, Integer>> relay = getNeuroidsSet(network, numberOfNeuronsInGroup, numberOfRelayNeuroids, 0);
-        final Set<Neuroid.NeuroidGraph.NeuronNode<Float, Integer>> b = getNeuroidsSet(network, numberOfNeuronsInGroup + numberOfRelayNeuroids, numberOfNeuronsInGroup, 0);
+    private static List<EdgeWeightTuple<Float>> generateEdgesForLinkTestNetwork(Random random, Network<Float, MetaType> network, int numberOfNeuronsInGroup, int numberOfRelayNeuroids, float T) {
+        final Set<NeuronAdress> aNeuronAdresses = getNeuroidsSet(0, numberOfNeuronsInGroup, 0);
+        final Set<NeuronAdress> relayNeuronAdresses = getNeuroidsSet(numberOfNeuronsInGroup, numberOfRelayNeuroids, 0);
+        final Set<NeuronAdress> bNeuronAdresses = getNeuroidsSet(numberOfNeuronsInGroup + numberOfRelayNeuroids, numberOfNeuronsInGroup, 0);
 
-        final Set<Neuroid.Helper.EdgeWeightTuple.NeuronAdress> aNeuronAdresses = translateNeuronsToNeuronAddresses(a, Neuroid.Helper.EdgeWeightTuple.NeuronAdress.EnumType.HIDDEN);
-        final Set<Neuroid.Helper.EdgeWeightTuple.NeuronAdress> relayNeuronAdresses = translateNeuronsToNeuronAddresses(relay, Neuroid.Helper.EdgeWeightTuple.NeuronAdress.EnumType.HIDDEN);
-        final Set<Neuroid.Helper.EdgeWeightTuple.NeuronAdress> bNeuronAdresses = translateNeuronsToNeuronAddresses(b, Neuroid.Helper.EdgeWeightTuple.NeuronAdress.EnumType.HIDDEN);
-
-        List<Neuroid.Helper.EdgeWeightTuple<Float>> edges = new ArrayList<>();
+        List<EdgeWeightTuple<Float>> edges = new ArrayList<>();
 
         edges.addAll(DistribuatorHelper.forEachInputChooseRandomOutput(aNeuronAdresses, relayNeuronAdresses, T, random));
         edges.addAll(DistribuatorHelper.forEachInputChooseRandomOutput(relayNeuronAdresses, bNeuronAdresses, T, random));
@@ -403,21 +429,8 @@ public class TestNeuroidPredictiveJoinLearningAlgorithm {
         return edges;
     }
 
-
-    private static<Weighttype, ModeType> Set<Neuroid.Helper.EdgeWeightTuple.NeuronAdress> translateNeuronsToNeuronAddresses(final Set<Neuroid.NeuroidGraph.NeuronNode<Float, Integer>> neurons, final Neuroid.Helper.EdgeWeightTuple.NeuronAdress.EnumType neuronType ) {
-        Set<Neuroid.Helper.EdgeWeightTuple.NeuronAdress> result = new HashSet<>();
-
-        for( Neuroid.NeuroidGraph.NeuronNode<Float, Integer> iterationNeuron : neurons ) {
-            // dirty because it only works for hidden neurons
-            // this is no problem for PJOIN because the neurons which do the work are all hidden
-            result.add(new Neuroid.Helper.EdgeWeightTuple.NeuronAdress(iterationNeuron.index, neuronType));
-        }
-
-        return result;
-    }
-
-    private static List<Neuroid.Helper.EdgeWeightTuple<Float>> generateEdgesForJoinTestNetwork(Random random, int numberOfNeuronsInGroup, int k, float T) {
-        List<Neuroid.Helper.EdgeWeightTuple<Float>> result = new ArrayList<>();
+    private static List<EdgeWeightTuple<Float>> generateEdgesForJoinTestNetwork(Random random, int numberOfNeuronsInGroup, int k, float T) {
+        List<EdgeWeightTuple<Float>> result = new ArrayList<>();
 
         // for each result neuron do this
         //  * search k neurons in A and B
@@ -459,23 +472,23 @@ public class TestNeuroidPredictiveJoinLearningAlgorithm {
             for( final int iterationNeuronInA : neuronsInA ) {
                 final int sourceIndex = iterationNeuronInA + 0*numberOfNeuronsInGroup;
                 final float threshold = T; // must be T because else the learning for the enhanced join mechanism doesn't work at all
-                result.add(new Neuroid.Helper.EdgeWeightTuple<>(new Neuroid.Helper.EdgeWeightTuple.NeuronAdress(sourceIndex, Neuroid.Helper.EdgeWeightTuple.NeuronAdress.EnumType.HIDDEN), new Neuroid.Helper.EdgeWeightTuple.NeuronAdress(destinationNeuronIndex, Neuroid.Helper.EdgeWeightTuple.NeuronAdress.EnumType.HIDDEN), threshold));
+                result.add(new EdgeWeightTuple<>(new NeuronAdress(sourceIndex, NeuronAdress.EnumType.HIDDEN), new NeuronAdress(destinationNeuronIndex, NeuronAdress.EnumType.HIDDEN), threshold));
             }
 
             for( final int iterationNeuronInB : neuronsInB ) {
                 final int sourceIndex = iterationNeuronInB + 1*numberOfNeuronsInGroup;
-                result.add(new Neuroid.Helper.EdgeWeightTuple<>(new Neuroid.Helper.EdgeWeightTuple.NeuronAdress(sourceIndex, Neuroid.Helper.EdgeWeightTuple.NeuronAdress.EnumType.HIDDEN), new Neuroid.Helper.EdgeWeightTuple.NeuronAdress(destinationNeuronIndex, Neuroid.Helper.EdgeWeightTuple.NeuronAdress.EnumType.HIDDEN), T/k));
+                result.add(new EdgeWeightTuple<>(new NeuronAdress(sourceIndex, NeuronAdress.EnumType.HIDDEN), new NeuronAdress(destinationNeuronIndex, NeuronAdress.EnumType.HIDDEN), T/k));
             }
         }
 
         return result;
     }
 
-    private static Set<Neuroid.NeuroidGraph.NeuronNode<Float, Integer>> getNeuroidsSet(Neuroid<Float, Integer> network, int offset, int width, int setIndex) {
-        Set<Neuroid.NeuroidGraph.NeuronNode<Float, Integer>> resultSet = new HashSet<>();
+    private static Set<NeuronAdress> getNeuroidsSet(int offset, int width, int setIndex) {
+        Set<NeuronAdress> resultSet = new HashSet<>();
 
         for( int i = offset + width*setIndex; i < offset + width*(setIndex+1); i++ ) {
-            resultSet.add(network.getGraph().neuronNodes[i]);
+            resultSet.add(new NeuronAdress(i, NeuronAdress.EnumType.HIDDEN));
         }
 
         return resultSet;

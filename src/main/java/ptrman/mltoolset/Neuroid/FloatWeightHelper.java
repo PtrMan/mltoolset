@@ -3,7 +3,7 @@ package ptrman.mltoolset.Neuroid;
 /**
  *
  */
-public class FloatWeightHelper implements Neuroid.IWeighttypeHelper {
+public class FloatWeightHelper implements IWeighttypeHelper {
     @Override
     public Object getValueForZero() {
         return 0.0f;

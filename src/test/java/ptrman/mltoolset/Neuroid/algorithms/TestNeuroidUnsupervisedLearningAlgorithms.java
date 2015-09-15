@@ -2,7 +2,10 @@ package ptrman.mltoolset.Neuroid.algorithms;
 
 import org.junit.Assert;
 import org.junit.Test;
-import ptrman.mltoolset.Neuroid.Neuroid;
+import ptrman.mltoolset.Neuroid.DannNetworkAccessor;
+import ptrman.mltoolset.Neuroid.EdgeWeightTuple;
+import ptrman.mltoolset.Neuroid.Network;
+import ptrman.mltoolset.Neuroid.NeuronAdress;
 import ptrman.mltoolset.Neuroid.vincal.Distributator;
 
 import java.util.List;
@@ -16,63 +19,63 @@ public class TestNeuroidUnsupervisedLearningAlgorithms {
     public void twoInputs() {
         Distributator.IConnectorService<Integer> connectorService = new Distributator.ManyToOneConnectorService<>(5, 2, 5);
 
-        List<Neuroid.Helper.EdgeWeightTuple<Integer>> graphEdges = connectorService.createEdges(1, 2, 2, 0.0, new Random());
+        List<EdgeWeightTuple<Integer>> graphEdges = connectorService.createEdges(1, 2, 2, 0.0, new Random());
 
-        Neuroid<Integer, Integer> neuroid = new Neuroid<>(new ptrman.mltoolset.Neuroid.IntegerWeightHelper());
+        Network<Integer, Integer> network = new Network<>(new ptrman.mltoolset.Neuroid.IntegerWeightHelper(), new DannNetworkAccessor<>());
 
-        neuroid.update = new NeuroidUnsupervisedLearningAlgorithms.Update();
+        network.update = new NeuroidUnsupervisedLearningAlgorithms.Update();
 
-        neuroid.allocateNeurons(5, 5 * 2, 0);
+        network.allocateNeurons(5, 5 * 2, 0);
 
         for( int neuronI = 0; neuronI < 5; neuronI++ ) {
-            neuroid.getGraph().neuronNodes[neuronI].graphElement.threshold = 0xffff; // inf
+            network.getNetworkAccessor().getNeuroidAccessorByAdress(new NeuronAdress(neuronI, NeuronAdress.EnumType.HIDDEN)).setThreshold(0xffff); // inf
         }
 
-        neuroid.addEdgeWeightTuples(graphEdges);
-        neuroid.initialize();
+        network.addEdgeWeightTuples(graphEdges);
+        network.initialize();
 
         // stimulate input A
         for( int i = 0; i < 5*2; i++ ) {
-            neuroid.setActivationOfInputNeuron(i, false);
+            network.setActivationOfInputNeuron(i, false);
         }
         for( int i = 0; i < 5; i++ ) {
-            neuroid.setActivationOfInputNeuron(i, true);
+            network.setActivationOfInputNeuron(i, true);
         }
 
-        neuroid.timestep();
+        network.timestep();
 
         // stimulate input B
         for( int i = 0; i < 5*2; i++ ) {
-            neuroid.setActivationOfInputNeuron(i, false);
+            network.setActivationOfInputNeuron(i, false);
         }
         for( int i = 5; i < 10; i++ ) {
-            neuroid.setActivationOfInputNeuron(i, true);
+            network.setActivationOfInputNeuron(i, true);
         }
 
-        neuroid.timestep();
+        network.timestep();
 
         for( int i = 0; i < 5*2; i++ ) {
-            neuroid.setActivationOfInputNeuron(i, false);
+            network.setActivationOfInputNeuron(i, false);
         }
         // stimulate A and B
         for( int i = 0; i < 5; i++ ) {
-            neuroid.setActivationOfInputNeuron(i, true);
+            network.setActivationOfInputNeuron(i, true);
         }
         for( int i = 5; i < 10; i++ ) {
-            neuroid.setActivationOfInputNeuron(i, true);
+            network.setActivationOfInputNeuron(i, true);
         }
 
         // let it settle in
-        neuroid.timestep();
+        network.timestep();
 
-        neuroid.timestep();
+        network.timestep();
 
         // check that at least one neuron is active
         boolean atLeastOneActive = false;
 
-        final boolean[] activityOfNeurons = neuroid.getActiviationOfNeurons();
-        for( int neuronI = 0; neuronI < 5*2; neuronI++ ) {
-            if( activityOfNeurons[neuronI] ) {
+        final boolean[] activityOfHiddenNeurons = network.getActiviationOfHiddenNeurons();
+        for( int neuronI = 0; neuronI < activityOfHiddenNeurons.length; neuronI++ ) {
+            if( activityOfHiddenNeurons[neuronI] ) {
                 atLeastOneActive = true;
                 break;
             }

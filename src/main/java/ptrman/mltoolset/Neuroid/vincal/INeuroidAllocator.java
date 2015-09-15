@@ -1,6 +1,6 @@
 package ptrman.mltoolset.Neuroid.vincal;
 
-import ptrman.mltoolset.Neuroid.Neuroid;
+import ptrman.mltoolset.Neuroid.NeuronAdress;
 
 import java.util.Set;
 
@@ -16,5 +16,5 @@ public interface INeuroidAllocator<WeightType, ModeType> {
      * @param k how many synapses should at least go from both input sets to the result
      * @return set of neuroids where the constraints are satisfied
      */
-    Set<Neuroid.NeuroidGraph.NeuronNode<WeightType, ModeType>> allocateNeuroidsWithConstraintsConnectedToBothInputsAndWithAtLeastNSynapsesToBoth(final Set<Neuroid.NeuroidGraph.NeuronNode<WeightType, ModeType>> a, final Set<Neuroid.NeuroidGraph.NeuronNode<WeightType, ModeType>> b, int numberOfResultNeuroids, int k);
+    Set<NeuronAdress> allocateNeuroidsWithConstraintsConnectedToBothInputsAndWithAtLeastNSynapsesToBoth(final Set<NeuronAdress> a, final Set<NeuronAdress> b, int numberOfResultNeuroids, int k);
 }

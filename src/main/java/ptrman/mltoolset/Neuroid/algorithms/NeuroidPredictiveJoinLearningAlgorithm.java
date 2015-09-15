@@ -1,6 +1,6 @@
 package ptrman.mltoolset.Neuroid.algorithms;
 
-import ptrman.mltoolset.Neuroid.Neuroid;
+import ptrman.mltoolset.Neuroid.*;
 import ptrman.mltoolset.Neuroid.helper.EnumStandardNeuroidState;
 import ptrman.mltoolset.Neuroid.helper.Query;
 import ptrman.mltoolset.Neuroid.vincal.INeuroidAllocator;
@@ -23,14 +23,16 @@ import java.util.Set;
  * written by SquareOfTwo, Github PtrMan, robertw89@googlemail.com
  */
 public class NeuroidPredictiveJoinLearningAlgorithm {
-    public static class DummyUpdate implements Neuroid.IUpdate<Float, MetaType> {
+    public static class DummyUpdate implements IUpdate<Float, MetaType> {
         @Override
-        public void calculateUpdateFunction(Neuroid.NeuroidGraph<Float, MetaType> graph, Neuroid.NeuroidGraph.NeuronNode<Float, MetaType> neuroid, Neuroid.IWeighttypeHelper<Float> weighttypeHelper) {
-            neuroid.graphElement.nextFiring = weighttypeHelper.greaterEqual(neuroid.graphElement.sumOfIncommingWeights, neuroid.graphElement.threshold);
+        public void calculateUpdateFunction(INetworkAccessor<Float, MetaType> neuroidNetworkAccessor, final NeuronAdress neuronAdress, IWeighttypeHelper<Float> weighttypeHelper) {
+            INeuronAccessor<Float, MetaType> neuron = neuroidNetworkAccessor.getNeuroidAccessorByAdress(neuronAdress);
+
+            neuron.setNextFiring(weighttypeHelper.greaterEqual(neuron.getSumOfIncommingWeights(), neuron.getThreshold()));
         }
 
         @Override
-        public void initialize(Neuroid.NeuroidGraph.NeuronNode<Float, MetaType> neuroid, List<Float> updatedWeights) {
+        public void initialize(INetworkAccessor<Float, MetaType> neuroidAccessor, NeuronAdress neuronAdress, List<Float> updatedWeights) {
 
         }
     }
@@ -41,7 +43,7 @@ public class NeuroidPredictiveJoinLearningAlgorithm {
     }
 
 
-    public NeuroidPredictiveJoinLearningAlgorithm(INeuroidAllocator<Float, MetaType> neuroidAllocator, int r, int joinK, int linkK, float T, Neuroid<Float, MetaType> network) {
+    public NeuroidPredictiveJoinLearningAlgorithm(INeuroidAllocator<Float, MetaType> neuroidAllocator, int r, int joinK, int linkK, float T, Network<Float, MetaType> network) {
         this.neuroidAllocator = neuroidAllocator;
         this.r = r;
         this.joinK = joinK;
@@ -50,57 +52,58 @@ public class NeuroidPredictiveJoinLearningAlgorithm {
         this.network = network;
     }
 
-    public void setGlobalRelayNeuroids(Set<Neuroid.NeuroidGraph.NeuronNode<Float, MetaType>> globalRelayNeuroids) {
+    public void setGlobalRelayNeuroids(Set<NeuronAdress> globalRelayNeuroids) {
         this.globalRelayNeuroids = globalRelayNeuroids;
     }
 
-    private void pjoin(final Set<Neuroid.NeuroidGraph.NeuronNode<Float, MetaType>> a, final Set<Neuroid.NeuroidGraph.NeuronNode<Float, MetaType>> b) {
+    private void pjoin(final Set<NeuronAdress> a, final Set<NeuronAdress> b) {
         Query.FilterEdgeByCondition<Float, MetaType> filterForRelayNeuronsWhichHadFired = new Query.FilterEdgeByCondition<Float, MetaType>() {
-
             @Override
-            public boolean query(Neuroid.NeuroidGraph.Edge<Float, MetaType> edge) {
-                return globalRelayNeuroids.contains(edge.getSourceNode()) && edge.getSourceNode().graphElement.firingHistory[0] == true;
+            public boolean query(IEdge edge) {
+                return globalRelayNeuroids.contains(edge.getSourceAdress()) && network.getNetworkAccessor().getNeuroidAccessorByAdress(edge.getSourceAdress()).getFiringHistory(0) == true;
             }
         };
 
 
+        INetworkAccessor<Float, MetaType> networkAccessor = network.getNetworkAccessor();
 
-        final Set<Neuroid.NeuroidGraph.NeuronNode<Float, MetaType>> c = joinEnhanced(a, b);
 
-        Set<Neuroid.NeuroidGraph.NeuronNode<Float, MetaType>> cp = new HashSet<>();
+        final Set<NeuronAdress> c = joinEnhanced(a, b);
+
+        Set<NeuronAdress> cp = new HashSet<>();
 
         // filter for cp
-        for(  Neuroid.NeuroidGraph.NeuronNode<Float, MetaType> iterationNeuroid : c ) {
-            if( iterationNeuroid.graphElement.meta.isPredictive ) {
-                cp.add(iterationNeuroid);
+        for( final NeuronAdress iterationNeuroidAdress : c ) {
+            if( networkAccessor.getNeuroidAccessorByAdress(iterationNeuroidAdress).getMeta().isPredictive ) {
+                cp.add(iterationNeuroidAdress);
             }
         }
 
         // let the neurons in c which are not in cp enter the state OPERATIONAL for join
-        for(  Neuroid.NeuroidGraph.NeuronNode<Float, MetaType> iterationNeuroid : c ) {
+        for( final NeuronAdress iterationNeuroidAdress : c ) {
             // optimized< neuroids in cp are predictive neuroids, so neuroids not in cp are not predictive neuroids >
-            if( !iterationNeuroid.graphElement.meta.isPredictive ) {
-                iterationNeuroid.graphElement.state = EnumStandardNeuroidState.JoinEnhancedOperational.ordinal();
+            if( !networkAccessor.getNeuroidAccessorByAdress(iterationNeuroidAdress).getMeta().isPredictive ) {
+                networkAccessor.getNeuroidAccessorByAdress(iterationNeuroidAdress).setState(EnumStandardNeuroidState.JoinEnhancedOperational.ordinal());
             }
         }
 
         // ======
         // step 3
 
-        Set<Neuroid.NeuroidGraph.NeuronNode<Float, MetaType>> ap = new HashSet<>();
-        Set<Neuroid.NeuroidGraph.NeuronNode<Float, MetaType>> bp = new HashSet<>();
+        Set<NeuronAdress> ap = new HashSet<>();
+        Set<NeuronAdress> bp = new HashSet<>();
 
         // filter for ap
-        for(  Neuroid.NeuroidGraph.NeuronNode<Float, MetaType> iterationNeuroid : a ) {
-            if( iterationNeuroid.graphElement.meta.isPredictive ) {
-                ap.add(iterationNeuroid);
+        for( final NeuronAdress iterationNeuroidAdress : a ) {
+            if( networkAccessor.getNeuroidAccessorByAdress(iterationNeuroidAdress).getMeta().isPredictive ) {
+                ap.add(iterationNeuroidAdress);
             }
         }
 
         // filter for bp
-        for(  Neuroid.NeuroidGraph.NeuronNode<Float, MetaType> iterationNeuroid : b ) {
-            if( iterationNeuroid.graphElement.meta.isPredictive ) {
-                bp.add(iterationNeuroid);
+        for( final NeuronAdress iterationNeuroidAdress : b ) {
+            if( networkAccessor.getNeuroidAccessorByAdress(iterationNeuroidAdress).getMeta().isPredictive ) {
+                bp.add(iterationNeuroidAdress);
             }
         }
 
@@ -115,18 +118,19 @@ public class NeuroidPredictiveJoinLearningAlgorithm {
         // set synapse state of relay synapses to ap to PARENT(which is .state = 1)
         // TODO< this should be done after the parallel link operations >
         {
-            for( Neuroid.NeuroidGraph.NeuronNode<Float, MetaType> iterationNeuroidFromAp : ap ) {
+            for( final NeuronAdress iterationNeuroidFromAp : ap ) {
                 List<Query.QueryCommand<Float, MetaType>> queryCommands = Arrays.asList(
                         new Query.GetInEdgesByNeuroidIndexQueryCommand(iterationNeuroidFromAp.index),
                         filterForRelayNeuronsWhichHadFired
                 );
                 final Query.QueryResult<Float, MetaType> queryResultForEdgesFromRelay = Query.query(queryCommands, network);
 
-                Set<Neuroid.NeuroidGraph.Edge<Float, MetaType>> edgeSetToDoubleAndSetToParent = queryResultForEdgesFromRelay.edgesSet;
+                Set<IEdge<Float>> edgeSetToDoubleAndSetToParent = queryResultForEdgesFromRelay.edgesSet;
 
-                for( Neuroid.NeuroidGraph.Edge<Float, MetaType> iterationEdge : edgeSetToDoubleAndSetToParent ) {
-                    iterationEdge.weight = iterationEdge.weight.floatValue() * 2.0f;
-                    iterationEdge.state = 1; // set to PARENT state
+                for( IEdge<Float> iterationEdge : edgeSetToDoubleAndSetToParent ) {
+                    iterationEdge.setWeight(iterationEdge.getWeight().floatValue() * 2.0f);
+                    iterationEdge.setState(1); // set to PARENT state
+                    networkAccessor.updateEdge(iterationEdge);
                 }
 
             }
@@ -139,18 +143,19 @@ public class NeuroidPredictiveJoinLearningAlgorithm {
         // set synapse state of relay synapses to ap to PARENT(which is .state = 1)
         // TODO< this should be done after the parallel link operations >
         {
-            for( Neuroid.NeuroidGraph.NeuronNode<Float, MetaType> iterationNeuroidFromBp : bp ) {
+            for( final NeuronAdress iterationNeuroidFromBp : bp ) {
                 List<Query.QueryCommand<Float, MetaType>> queryCommands = Arrays.asList(
                         new Query.GetInEdgesByNeuroidIndexQueryCommand(iterationNeuroidFromBp.index),
                         filterForRelayNeuronsWhichHadFired
                 );
                 final Query.QueryResult<Float, MetaType> queryResultForEdgesFromRelay = Query.query(queryCommands, network);
 
-                Set<Neuroid.NeuroidGraph.Edge<Float, MetaType>> edgeSetToDoubleAndSetToParent = queryResultForEdgesFromRelay.edgesSet;
+                Set<IEdge<Float>> edgeSetToDoubleAndSetToParent = queryResultForEdgesFromRelay.edgesSet;
 
-                for( Neuroid.NeuroidGraph.Edge<Float, MetaType> iterationEdge : edgeSetToDoubleAndSetToParent ) {
-                    iterationEdge.weight = iterationEdge.weight.floatValue() * 2.0f;
-                    iterationEdge.state = 1; // set to PARENT state
+                for( IEdge<Float> iterationEdge : edgeSetToDoubleAndSetToParent ) {
+                    iterationEdge.setWeight(iterationEdge.getWeight().floatValue() * 2.0f);
+                    iterationEdge.setState(1); // set to PARENT state
+                    networkAccessor.updateEdge(iterationEdge);
                 }
 
             }
@@ -159,12 +164,12 @@ public class NeuroidPredictiveJoinLearningAlgorithm {
         // ======
         // step 4
         // * cp enters operation state P-operational
-        for(  Neuroid.NeuroidGraph.NeuronNode<Float, MetaType> iterationNeuroid : cp ) {
-            iterationNeuroid.graphElement.state = EnumStandardNeuroidState.JoinPOperational.ordinal();
+        for( final NeuronAdress iterationNeuroid : cp ) {
+            networkAccessor.getNeuroidAccessorByAdress(iterationNeuroid).setState(EnumStandardNeuroidState.JoinPOperational.ordinal());
         }
 
         // double strength from synapses from A and B to Cp
-        for( Neuroid.NeuroidGraph.NeuronNode<Float, MetaType> iterationNeuroidFromCp : cp ) {
+        for( final NeuronAdress iterationNeuroidFromCp : cp ) {
             // we assume that A and B can overlap, so we have to merge the edge/synapse set of a and b
             // if this is not needed the edge strength doubling can be done without the set edgeSetToDouble
 
@@ -174,7 +179,7 @@ public class NeuroidPredictiveJoinLearningAlgorithm {
             );
             Query.QueryResult<Float, MetaType> queryResultForEdgesFromA = Query.query(queryCommands, network);
 
-            Set<Neuroid.NeuroidGraph.Edge<Float, MetaType>> edgeSetToDouble = queryResultForEdgesFromA.edgesSet;
+            Set<IEdge<Float>> edgeSetToDouble = queryResultForEdgesFromA.edgesSet;
 
             queryCommands = Arrays.asList(
                     new Query.GetInEdgesByNeuroidIndexQueryCommand(iterationNeuroidFromCp.index),
@@ -185,8 +190,9 @@ public class NeuroidPredictiveJoinLearningAlgorithm {
             edgeSetToDouble.addAll(queryResultForEdgesFromB.edgesSet);
 
             // double strengths of edges
-            for( Neuroid.NeuroidGraph.Edge<Float, MetaType> iterationEdge : edgeSetToDouble ) {
-                iterationEdge.weight = iterationEdge.weight.floatValue() * 2.0f;
+            for( IEdge<Float> iterationEdge : edgeSetToDouble ) {
+                iterationEdge.setWeight(iterationEdge.getWeight().floatValue() * 2.0f);
+                networkAccessor.updateEdge(iterationEdge);
             }
         }
     }
@@ -198,16 +204,19 @@ public class NeuroidPredictiveJoinLearningAlgorithm {
      * @param a neuroids of the group which represents a
      * @param b neuroids of the group which represents b
      */
-    protected Set<Neuroid.NeuroidGraph.NeuronNode<Float, MetaType>> joinEnhanced(final Set<Neuroid.NeuroidGraph.NeuronNode<Float, MetaType>> a, final Set<Neuroid.NeuroidGraph.NeuronNode<Float, MetaType>> b) {
-        final Set<Neuroid.NeuroidGraph.NeuronNode<Float, MetaType>> z = neuroidAllocator.allocateNeuroidsWithConstraintsConnectedToBothInputsAndWithAtLeastNSynapsesToBoth(a, b, r, joinK);
-
+    protected Set<NeuronAdress> joinEnhanced(final Set<NeuronAdress> a, final Set<NeuronAdress> b) {
         // TODO< call interface for feedback for visualisation and/or debugging, unittesting, etc >
+
+        INetworkAccessor<Float, MetaType> networkAccessor = network.getNetworkAccessor();
+
+        final Set<NeuronAdress> z = neuroidAllocator.allocateNeuroidsWithConstraintsConnectedToBothInputsAndWithAtLeastNSynapsesToBoth(a, b, r, joinK);
+
 
         // ALGORITHM STEP
         // let "a" fire and update incomming weights of neuroids in z (in the timestep)
 
-        for( Neuroid.NeuroidGraph.NeuronNode<Float, MetaType> iterationANeuroid : a ) {
-            iterationANeuroid.graphElement.nextFiring = true;
+        for( final NeuronAdress iterationANeuroid : a ) {
+            networkAccessor.getNeuroidAccessorByAdress(iterationANeuroid).setNextFiring(true);
         }
 
         network.timestep();
@@ -216,10 +225,17 @@ public class NeuroidPredictiveJoinLearningAlgorithm {
 
 
 
-        for( Neuroid.NeuroidGraph.NeuronNode<Float, MetaType> iterationZNeuroid : z ) {
+        for( final NeuronAdress iterationZNeuroidAdress : z ) {
+            INeuronAccessor<Float, MetaType> iterationZNeuroid = networkAccessor.getNeuroidAccessorByAdress(iterationZNeuroidAdress);
+
+            IEdgesAccessor<Float, MetaType> inEdgesAccessor = iterationZNeuroid.getInEdgesAccessor();
+
             int numberOfSynapsesFromA = 0;
-            for( Neuroid.NeuroidGraph.Edge<Float, MetaType> iterationEdge : network.getGraph().graph.getInEdges(iterationZNeuroid) ) {
-                if( a.contains(iterationEdge.getSourceNode()) ) {
+
+            for( int edgeIndex = 0; edgeIndex < inEdgesAccessor.getNumberOfEdges(); edgeIndex++ ) {
+                IEdge<Float> iterationEdge = inEdgesAccessor.getEdge(edgeIndex);
+
+                if( a.contains(iterationEdge.getSourceAdress()) ) {
                     numberOfSynapsesFromA++;
                 }
             }
@@ -227,32 +243,37 @@ public class NeuroidPredictiveJoinLearningAlgorithm {
             final float weightsForSynapsesFromFiringNeurons = (T / 2.0f) * (1.0f / (float)numberOfSynapsesFromA);
 
 
-            if( iterationZNeuroid.graphElement.nextFiring ) {
-                adjustWeightsOfSynapsesCommingFromNeuroidSetWhichFiresForNeuroid(a, iterationZNeuroid, weightsForSynapsesFromFiringNeurons);
+            if( iterationZNeuroid.getNextFiring() ) {
+                adjustWeightsOfSynapsesCommingFromNeuroidSetWhichFiresForNeuroid(a, iterationZNeuroidAdress, weightsForSynapsesFromFiringNeurons);
 
-                iterationZNeuroid.graphElement.state = EnumStandardNeuroidState.JoinEnhancedPoised.ordinal();
+                iterationZNeuroid.setState(EnumStandardNeuroidState.JoinEnhancedPoised.ordinal());
 
             } else {
-                iterationZNeuroid.graphElement.state = EnumStandardNeuroidState.JoinEnhancedDismissed.ordinal();
-                iterationZNeuroid.graphElement.threshold = 0.0f;
+                iterationZNeuroid.setState(EnumStandardNeuroidState.JoinEnhancedDismissed.ordinal());
+                iterationZNeuroid.setThreshold(0.0f);
             }
         }
 
         // ALGORITHM STEP
         // let "b" fire
 
-        for( Neuroid.NeuroidGraph.NeuronNode<Float, MetaType> iterationANeuroid : b ) {
-            iterationANeuroid.graphElement.nextFiring = true;
+        for( final NeuronAdress iterationANeuroid : b ) {
+            networkAccessor.getNeuroidAccessorByAdress(iterationANeuroid).setNextFiring(true);
         }
 
         network.timestep();
 
         // update neurons
-        for( Neuroid.NeuroidGraph.NeuronNode<Float, MetaType> iterationZNeuroid : z ) {
-            if( iterationZNeuroid.graphElement.state == EnumStandardNeuroidState.JoinEnhancedPoised.ordinal() ) {
+        for( final NeuronAdress iterationZNeuroidAdress : z ) {
+            INeuronAccessor<Float, MetaType> iterationZNeuroid = networkAccessor.getNeuroidAccessorByAdress(iterationZNeuroidAdress);
+
+            IEdgesAccessor<Float, MetaType> inEdgesAccessor = iterationZNeuroid.getInEdgesAccessor();
+
+            if( iterationZNeuroid.getState() == EnumStandardNeuroidState.JoinEnhancedPoised.ordinal() ) {
                 int numberOfSynapsesFromB = 0;
-                for( Neuroid.NeuroidGraph.Edge<Float, MetaType> iterationEdge : network.getGraph().graph.getInEdges(iterationZNeuroid) ) {
-                    if (b.contains(iterationEdge.getSourceNode())) {
+                for( int edgeIndex = 0; edgeIndex < inEdgesAccessor.getNumberOfEdges(); edgeIndex++ ) {
+                    IEdge<Float> iterationEdge = inEdgesAccessor.getEdge(edgeIndex);
+                    if( b.contains(iterationEdge.getSourceAdress()) ) {
                         numberOfSynapsesFromB++;
                     }
                 }
@@ -260,13 +281,13 @@ public class NeuroidPredictiveJoinLearningAlgorithm {
                 final float weightsForSynapsesFromFiringNeurons = (T / 2.0f) * (1.0f / (float)numberOfSynapsesFromB);
 
 
-                if( iterationZNeuroid.graphElement.nextFiring ) {
-                    adjustWeightsOfSynapsesCommingFromNeuroidSetWhichFiresForNeuroid(b, iterationZNeuroid, weightsForSynapsesFromFiringNeurons);
+                if( iterationZNeuroid.getNextFiring() ) {
+                    adjustWeightsOfSynapsesCommingFromNeuroidSetWhichFiresForNeuroid(b, iterationZNeuroidAdress, weightsForSynapsesFromFiringNeurons);
 
-                    iterationZNeuroid.graphElement.state = EnumStandardNeuroidState.JoinEnhancedOperational.ordinal();
+                    iterationZNeuroid.setState(EnumStandardNeuroidState.JoinEnhancedOperational.ordinal());
                 }
                 else {
-                    iterationZNeuroid.graphElement.state = EnumStandardNeuroidState.JoinEnhancedDismissed.ordinal();
+                    iterationZNeuroid.setState(EnumStandardNeuroidState.JoinEnhancedDismissed.ordinal());
                 }
             }
         }
@@ -274,27 +295,28 @@ public class NeuroidPredictiveJoinLearningAlgorithm {
         return z;
     }
 
-    protected void linkEnhanced(final Set<Neuroid.NeuroidGraph.NeuronNode<Float, MetaType>> a, final Set<Neuroid.NeuroidGraph.NeuronNode<Float, MetaType>> b) {
+    protected void linkEnhanced(final Set<NeuronAdress> a, final Set<NeuronAdress> b) {
         Query.FilterEdgeByCondition<Float, MetaType> filterForRelayNeuronsWhichHadFired = new Query.FilterEdgeByCondition<Float, MetaType>() {
-
             @Override
-            public boolean query(Neuroid.NeuroidGraph.Edge<Float, MetaType> edge) {
-                return globalRelayNeuroids.contains(edge.getSourceNode()) && edge.getSourceNode().graphElement.firingHistory[0] == true;
+            public boolean query(IEdge edge) {
+                return globalRelayNeuroids.contains(edge.getSourceAdress()) && network.getNetworkAccessor().getNeuroidAccessorByAdress(edge.getSourceAdress()).getFiringHistory(0) == true;
             }
         };
 
         // TODO< call interface for feedback for visualisation and/or debugging, unittesting, etc >
 
+        INetworkAccessor<Float, MetaType> networkAccessor = network.getNetworkAccessor();
+
         // set "b" neurons to state prepared
-        for (Neuroid.NeuroidGraph.NeuronNode<Float, MetaType> iterationBNeuroid : b) {
-            iterationBNeuroid.graphElement.state = EnumStandardNeuroidState.LinkEnhancedPrepared.ordinal();
+        for (NeuronAdress iterationBNeuroid : b) {
+            networkAccessor.getNeuroidAccessorByAdress(iterationBNeuroid).setState(EnumStandardNeuroidState.LinkEnhancedPrepared.ordinal());
         }
 
         // ALGORITHM STEP
         // let "a" fire
 
-        for (Neuroid.NeuroidGraph.NeuronNode<Float, MetaType> iterationANeuroid : a) {
-            iterationANeuroid.graphElement.nextFiring = true;
+        for (NeuronAdress iterationANeuroid : a) {
+            networkAccessor.getNeuroidAccessorByAdress(iterationANeuroid).setNextFiring(true);
         }
 
         network.timestep();
@@ -303,9 +325,11 @@ public class NeuroidPredictiveJoinLearningAlgorithm {
         network.timestep();
 
         // update neurons
-        for (Neuroid.NeuroidGraph.NeuronNode<Float, MetaType> iterationBNeuroid : b) {
-            if (iterationBNeuroid.graphElement.nextFiring && iterationBNeuroid.graphElement.state == EnumStandardNeuroidState.LinkEnhancedPrepared.ordinal()) {
-                iterationBNeuroid.graphElement.state = EnumStandardNeuroidState.LinkEnhancedLOperational.ordinal();
+        for (NeuronAdress iterationBNeuroid : b) {
+            INeuronAccessor<Float, MetaType> neuroidAccessor = networkAccessor.getNeuroidAccessorByAdress(iterationBNeuroid);
+
+            if (neuroidAccessor.getNextFiring() && neuroidAccessor.getState() == EnumStandardNeuroidState.LinkEnhancedPrepared.ordinal()) {
+                neuroidAccessor.setState(EnumStandardNeuroidState.LinkEnhancedLOperational.ordinal());
 
                 // query edges of fired relay neurons to the iterationBNeuroid
                 final List<Query.QueryCommand<Float, MetaType>> queryCommands = Arrays.asList(
@@ -315,8 +339,9 @@ public class NeuroidPredictiveJoinLearningAlgorithm {
                 Query.QueryResult<Float, MetaType> queryResult = Query.query(queryCommands, network);
 
                 // change weights
-                for( Neuroid.NeuroidGraph.Edge<Float, MetaType> iterationEdgeSynapseOfQuery : queryResult.edgesSet ) {
-                    iterationEdgeSynapseOfQuery.weight = T/(float)linkK;
+                for( IEdge<Float> iterationEdgeSynapseOfQuery : queryResult.edgesSet ) {
+                    iterationEdgeSynapseOfQuery.setWeight(T/(float)linkK);
+                    networkAccessor.updateEdge(iterationEdgeSynapseOfQuery);
                 }
             }
         }
@@ -329,15 +354,16 @@ public class NeuroidPredictiveJoinLearningAlgorithm {
      * @param destinationNeuroid
      * @param targetWeight
      */
-    private void adjustWeightsOfSynapsesCommingFromNeuroidSetWhichFiresForNeuroid(Set<Neuroid.NeuroidGraph.NeuronNode<Float, MetaType>> sourceNeuroidsWhichAreCheckedForFiring, Neuroid.NeuroidGraph.NeuronNode<Float, MetaType> destinationNeuroid, float targetWeight) {
+    private void adjustWeightsOfSynapsesCommingFromNeuroidSetWhichFiresForNeuroid(Set<NeuronAdress> sourceNeuroidsWhichAreCheckedForFiring, NeuronAdress destinationNeuroid, float targetWeight) {
         final List<Query.QueryCommand<Float, MetaType>> queryCommands = Arrays.asList(
             new Query.GetInEdgesByNeuroidIndexQueryCommand(destinationNeuroid.index),
             new Query.FilterEdgeSourceQueryCommand(sourceNeuroidsWhichAreCheckedForFiring)
         );
 
         final Query.QueryResult<Float, MetaType> queryResult = Query.query(queryCommands, network);
-        for( Neuroid.NeuroidGraph.Edge<Float, MetaType> iterationEdge : queryResult.edgesSet ) {
-            iterationEdge.weight = targetWeight;
+        for( IEdge iterationEdge : queryResult.edgesSet ) {
+            iterationEdge.setWeight(targetWeight);
+            network.getNetworkAccessor().updateEdge(iterationEdge);
         }
     }
 
@@ -349,8 +375,7 @@ public class NeuroidPredictiveJoinLearningAlgorithm {
     protected final INeuroidAllocator<Float, MetaType> neuroidAllocator;
 
     // TODO< method to set this >
-    // TODO< Adress notion for easier rewrite for edgeless networks >
-    private Set<Neuroid.NeuroidGraph.NeuronNode<Float, MetaType>> globalRelayNeuroids;
+    private Set<NeuronAdress> globalRelayNeuroids;
 
-    private Neuroid<Float, MetaType> network;
+    private Network<Float, MetaType> network;
 }

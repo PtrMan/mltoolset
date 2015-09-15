@@ -1,6 +1,7 @@
 package ptrman.mltoolset.Neuroid.vincal;
 
-import ptrman.mltoolset.Neuroid.Neuroid;
+import ptrman.mltoolset.Neuroid.EdgeWeightTuple;
+import ptrman.mltoolset.Neuroid.NeuronAdress;
 import ptrman.mltoolset.misc.SetHelper;
 
 import java.util.ArrayList;
@@ -12,13 +13,13 @@ import java.util.Set;
  * Contains algorithms for getting the connections by a specific (fixed) rule
  */
 public class DistribuatorHelper {
-    public static<Weighttype> List<Neuroid.Helper.EdgeWeightTuple<Weighttype>> forEachInputChooseRandomOutput(final Set<Neuroid.Helper.EdgeWeightTuple.NeuronAdress> inputNeurons, final Set<Neuroid.Helper.EdgeWeightTuple.NeuronAdress> outputNeurons, Weighttype weight, Random random) {
-        List<Neuroid.Helper.EdgeWeightTuple<Weighttype>> resultConnections = new ArrayList<>();
+    public static<Weighttype> List<EdgeWeightTuple<Weighttype>> forEachInputChooseRandomOutput(final Set<NeuronAdress> inputNeurons, final Set<NeuronAdress> outputNeurons, Weighttype weight, Random random) {
+        List<EdgeWeightTuple<Weighttype>> resultConnections = new ArrayList<>();
 
-        for( Neuroid.Helper.EdgeWeightTuple.NeuronAdress iterationInput : inputNeurons ) {
-            Neuroid.Helper.EdgeWeightTuple.NeuronAdress chosenDestinationNeuron = SetHelper.chooseRandomElement(outputNeurons, random);
+        for( final NeuronAdress iterationInput : inputNeurons ) {
+            NeuronAdress chosenDestinationNeuron = SetHelper.chooseRandomElement(outputNeurons, random);
 
-            resultConnections.add(new Neuroid.Helper.EdgeWeightTuple<Weighttype>(iterationInput, chosenDestinationNeuron, weight));
+            resultConnections.add(new EdgeWeightTuple<>(iterationInput, chosenDestinationNeuron, weight));
         }
 
         return resultConnections;

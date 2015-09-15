@@ -1,5 +1,6 @@
 package ptrman.mltoolset.Neuroid;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
@@ -7,7 +8,7 @@ import java.util.Random;
  * Simple test case for standard neuroid impl.
  */
 public class TestNeuroidSimple {
-    private static class Update implements Neuroid.IUpdate<Float, Integer> {
+    private static class Update implements IUpdate<Float, Integer> {
         private final int latencyAfterActivation;
         private final float randomFiringPropability;
 
@@ -17,57 +18,61 @@ public class TestNeuroidSimple {
         }
 
         @Override
-        public void calculateUpdateFunction(Neuroid.NeuroidGraph<Float, Integer> graph, Neuroid.NeuroidGraph.NeuronNode<Float, Integer> neuroid, Neuroid.IWeighttypeHelper<Float> weighttypeHelper) {
-            neuroid.graphElement.nextFiring = neuroid.graphElement.isStimulated(weighttypeHelper);
+        public void calculateUpdateFunction(INetworkAccessor<Float, Integer> neuroidAccessor, NeuronAdress neuronAdress, IWeighttypeHelper<Float> weighttypeHelper) {
+            //
+            INeuronAccessor<Float, Integer> currentNeuroidAccessor = neuroidAccessor.getNeuroidAccessorByAdress(neuronAdress);
 
-            if (neuroid.graphElement.nextFiring) {
-                neuroid.graphElement.remainingLatency = latencyAfterActivation;
+            currentNeuroidAccessor.setNextFiring(currentNeuroidAccessor.isStimulated(weighttypeHelper));
+
+            if (currentNeuroidAccessor.getNextFiring()) {
+                currentNeuroidAccessor.setRemainingLatency(latencyAfterActivation);
             }
             else {
                 boolean isFiring = (float)random.nextFloat() < randomFiringPropability;
 
-                neuroid.graphElement.nextFiring = isFiring;
+                currentNeuroidAccessor.setNextFiring(isFiring);
             }
         }
 
         @Override
-        public void initialize(Neuroid.NeuroidGraph.NeuronNode<Float, Integer> neuroid, List<Integer> updatedMode, List<Float> updatedWeights) {
+        public void initialize(INetworkAccessor<Float, Integer> neuroidAccessor, NeuronAdress neuronAdress, List<Float> updatedWeights) {
 
         }
 
         private Random random = new Random();
-
     }
 
     public static void main(String[] args) {
         final int latencyAfterActivation = 3;
         final float randomFiringPropability =.0f;
 
-        Neuroid<Float, Integer> neuroid = new Neuroid<>(new ptrman.mltoolset.Neuroid.FloatWeightHelper());
-        neuroid.update = new Update(latencyAfterActivation, randomFiringPropability);
+        Network<Float, Integer> network = new Network<>(new FloatWeightHelper(), new DannNetworkAccessor<>());
+        network.update = new Update(latencyAfterActivation, randomFiringPropability);
 
-        neuroid.allocateNeurons(3, 3, 0);
+        network.allocateNeurons(3, 3, 0);
 
-        neuroid.getGraph().neuronNodes[0].graphElement.threshold = 0.5f;
-        neuroid.getGraph().neuronNodes[1].graphElement.threshold = 0.5f;
-        neuroid.getGraph().neuronNodes[2].graphElement.threshold = 0.5f;
+        network.getNetworkAccessor().getNeuroidAccessorByAdress(new NeuronAdress(0, NeuronAdress.EnumType.HIDDEN)).setThreshold(0.5f);
+        network.getNetworkAccessor().getNeuroidAccessorByAdress(new NeuronAdress(1, NeuronAdress.EnumType.HIDDEN)).setThreshold(0.5f);
+        network.getNetworkAccessor().getNeuroidAccessorByAdress(new NeuronAdress(2, NeuronAdress.EnumType.HIDDEN)).setThreshold(0.5f);
 
-        neuroid.addConnection(new Neuroid.NeuroidGraph.Edge<>(neuroid.getGraph().inputNeuronNodes[2], neuroid.getGraph().neuronNodes[0], 0.9f));
-        neuroid.addConnection(new Neuroid.NeuroidGraph.Edge<>(neuroid.getGraph().neuronNodes[0], neuroid.getGraph().neuronNodes[1], 0.9f));
+        List<EdgeWeightTuple<Float>> edgeWeightTuples = new ArrayList<>();
+        edgeWeightTuples.add(new EdgeWeightTuple<>(new NeuronAdress(2, NeuronAdress.EnumType.INPUT), new NeuronAdress(0, NeuronAdress.EnumType.HIDDEN), 0.9f));
+        edgeWeightTuples.add(new EdgeWeightTuple<>(new NeuronAdress(0, NeuronAdress.EnumType.HIDDEN), new NeuronAdress(1, NeuronAdress.EnumType.HIDDEN), 0.9f));
+        network.addEdgeWeightTuples(edgeWeightTuples);
 
-        neuroid.initialize();
+        network.initialize();
 
         for( int timestep = 0; timestep < 5; timestep++ ) {
             System.out.println("=A=A=A=A");
 
-            neuroid.debugAllNeurons();
+            //network.debugAllNeurons();
 
             // stimulate
-            neuroid.setActivationOfInputNeuron(2, true);
+            network.setActivationOfInputNeuron(2, true);
 
-            neuroid.timestep();
+            network.timestep();
 
-            neuroid.debugAllNeurons();
+            //network.debugAllNeurons();
 
         }
 

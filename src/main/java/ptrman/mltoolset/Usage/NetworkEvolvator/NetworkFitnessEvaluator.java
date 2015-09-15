@@ -1,7 +1,7 @@
 package ptrman.mltoolset.Usage.NetworkEvolvator;
 
 import org.uncommons.watchmaker.framework.FitnessEvaluator;
-import ptrman.mltoolset.Neuroid.Neuroid;
+import ptrman.mltoolset.Neuroid.*;
 
 import java.util.List;
 import java.util.Random;
@@ -9,7 +9,7 @@ import java.util.Random;
 import static java.lang.Math.max;
 
 public class NetworkFitnessEvaluator implements FitnessEvaluator<NetworkGeneticExpression> {
-    private static class Update implements Neuroid.IUpdate<Float, Integer> {
+    private static class Update implements IUpdate<Float, Integer> {
         private final int latencyAfterActivation;
         private final float randomFiringPropability;
 
@@ -19,26 +19,28 @@ public class NetworkFitnessEvaluator implements FitnessEvaluator<NetworkGeneticE
         }
 
         @Override
-        public void calculateUpdateFunction(Neuroid.NeuroidGraph<Float, Integer> graph, Neuroid.NeuroidGraph.NeuronNode<Float, Integer> neuroid, Neuroid.IWeighttypeHelper<Float> weighttypeHelper) {
-            neuroid.graphElement.nextFiring = neuroid.graphElement.isStimulated(weighttypeHelper);
+        public void calculateUpdateFunction(INetworkAccessor<Float, Integer> neuroidNetworkAccessor, NeuronAdress neuronAdress, IWeighttypeHelper<Float> weighttypeHelper) {
+            INeuronAccessor<Float, Integer> neuronAccessor = neuroidNetworkAccessor.getNeuroidAccessorByAdress(neuronAdress);
 
-            if (neuroid.graphElement.nextFiring) {
-                neuroid.graphElement.remainingLatency = latencyAfterActivation;
+            neuronAccessor.setNextFiring(neuronAccessor.isStimulated(weighttypeHelper));
+
+            if (neuronAccessor.getNextFiring()) {
+                neuronAccessor.setRemainingLatency(latencyAfterActivation);
             }
             else {
                 boolean isFiring = (float)random.nextFloat() < randomFiringPropability;
 
-                neuroid.graphElement.nextFiring = isFiring;
+                neuronAccessor.setNextFiring(isFiring);
             }
+
         }
 
         @Override
-        public void initialize(Neuroid.NeuroidGraph.NeuronNode<Float, Integer> neuroid, List<Integer> updatedMode, List<Float> updatedWeights) {
+        public void initialize(INetworkAccessor<Float, Integer> neuroidAccessor, NeuronAdress neuronAdress, List<Float> updatedWeights) {
 
         }
 
         private Random random = new Random();
-
     }
 
     public double getFitness(NetworkGeneticExpression networkGeneticExpression, List<? extends NetworkGeneticExpression> list) {
@@ -54,32 +56,34 @@ public class NetworkFitnessEvaluator implements FitnessEvaluator<NetworkGeneticE
 
         // evaluate how many times the output neuron (neuron 0) got stimulated
 
-        Neuroid<Float, Integer> neuroid = new Neuroid<>(new ptrman.mltoolset.Neuroid.FloatWeightHelper());
-        neuroid.update = new Update(latencyAfterActivation, randomFiringPropability);
+        Network<Float, Integer> network = new Network<>(new ptrman.mltoolset.Neuroid.FloatWeightHelper(), new DannNetworkAccessor<>());
+        network.update = new Update(latencyAfterActivation, randomFiringPropability);
 
-        neuroid.allocateNeurons(networkGeneticExpression.neuronCandidatesActive.length, numberOfInputNeurons, 1);
+        INetworkAccessor<Float, Integer> neuroidNetworkAccessor = network.getNetworkAccessor();
+
+        network.allocateNeurons(networkGeneticExpression.neuronCandidatesActive.length, numberOfInputNeurons, 1);
 
         for( int neuronI = 0; neuronI < networkGeneticExpression.neuronCandidatesActive.length; neuronI++ ) {
-            neuroid.getGraph().neuronNodes[neuronI].graphElement.threshold = new Float(0.4f);
+            neuroidNetworkAccessor.getNeuroidAccessorByAdress(new NeuronAdress(neuronI, NeuronAdress.EnumType.HIDDEN)).setThreshold(0.4f);
         }
 
-        neuroid.addEdgeWeightTuples(networkGeneticExpression.connectionsWithWeights);
+        network.addEdgeWeightTuples(networkGeneticExpression.connectionsWithWeights);
 
-        neuroid.initialize();
+        network.initialize();
 
         // simulate network
         for( int timestep = 0; timestep < 80; timestep++ ) {
             // stimulate
 
             if( (timestep % 5) == 0 ) {
-                neuroid.setActivationOfInputNeuron(0, true);
+                network.setActivationOfInputNeuron(0, true);
             }
 
-            neuroid.timestep();
+            network.timestep();
 
             // read out result and rate
 
-            final boolean[] neuronActivation = neuroid.getActiviationOfNeurons();
+            final boolean[] neuronActivation = network.getActiviationOfHiddenNeurons();
 
             if( neuronActivation[0] ) {
                 //fitness += 10.0f;

@@ -1,7 +1,8 @@
 package ptrman.mltoolset.Usage.NetworkEvolvator;
 
 import org.uncommons.watchmaker.framework.CandidateFactory;
-import ptrman.mltoolset.Neuroid.Neuroid;
+import ptrman.mltoolset.Neuroid.EdgeWeightTuple;
+import ptrman.mltoolset.Neuroid.NeuronAdress;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -66,7 +67,7 @@ public class NetworkCandidateFactory implements CandidateFactory<NetworkGeneticE
 
             // for now just hidden connections because it can evolve the connections to the input later
 
-            result.connectionsWithWeights.add(new Neuroid.Helper.EdgeWeightTuple<Float>(new Neuroid.Helper.EdgeWeightTuple.NeuronAdress(sourceNeuronIndex, Neuroid.Helper.EdgeWeightTuple.NeuronAdress.EnumType.HIDDEN), new Neuroid.Helper.EdgeWeightTuple.NeuronAdress( targetNeuronIndex, Neuroid.Helper.EdgeWeightTuple.NeuronAdress.EnumType.HIDDEN), 0.5f));
+            result.connectionsWithWeights.add(new EdgeWeightTuple<Float>(new NeuronAdress(sourceNeuronIndex, NeuronAdress.EnumType.HIDDEN), new NeuronAdress( targetNeuronIndex, NeuronAdress.EnumType.HIDDEN), 0.5f));
             counterOfConnections++;
         }
 

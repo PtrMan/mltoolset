@@ -1,6 +1,6 @@
 package ptrman.mltoolset.Neuroid.helper;
 
-import ptrman.mltoolset.Neuroid.Neuroid;
+import ptrman.mltoolset.Neuroid.*;
 
 import java.util.HashSet;
 import java.util.List;
@@ -12,6 +12,8 @@ import java.util.Set;
  * Used to hide Neuroid implementation details (CPU, GPU) (index access, OOP references)
  */
 public class Query {
+
+
     public static abstract class QueryCommand<Weighttype, Modetype> {
     }
 
@@ -25,45 +27,47 @@ public class Query {
 
     // TODO< add a Index version for gpu support >
     public static class FilterEdgeSourceQueryCommand<Weighttype, Modetype> extends QueryCommand<Weighttype, Modetype> {
-        public final Set<Neuroid<Weighttype, Modetype>> filteringNeuroidSet;
+        public final Set<NeuronAdress> filteringNeuroidSet;
 
-        public FilterEdgeSourceQueryCommand(final Set<Neuroid<Weighttype, Modetype>> filteringNeuroidSet) {
+        public FilterEdgeSourceQueryCommand(final Set<NeuronAdress> filteringNeuroidSet) {
             this.filteringNeuroidSet = filteringNeuroidSet;
         }
     }
 
     public static abstract class FilterEdgeByCondition<Weighttype, Modetype> extends QueryCommand<Weighttype, Modetype> {
-        public abstract boolean query(Neuroid.NeuroidGraph.Edge<Weighttype, Modetype> edge);
+        public abstract boolean query(IEdge edge);
     }
 
     public static class QueryResult<Weighttype, Modetype> {
-        public final Set<Neuroid<Weighttype, Modetype>> neuroidSet;
-        public final Set<Neuroid.NeuroidGraph.Edge<Weighttype, Modetype>> edgesSet;
+        public final Set<Network<Weighttype, Modetype>> neuroidSet;
+        public final Set<IEdge<Weighttype>> edgesSet;
 
-        public QueryResult(Set<Neuroid<Weighttype, Modetype>> neuroidSet, Set<Neuroid.NeuroidGraph.Edge<Weighttype, Modetype>> edgesSet) {
+        public QueryResult(Set<Network<Weighttype, Modetype>> neuroidSet, Set<IEdge<Weighttype>> edgesSet) {
             this.neuroidSet = neuroidSet;
             this.edgesSet = edgesSet;
         }
     }
 
-    public static<Weighttype, Modetype> QueryResult<Weighttype, Modetype> query(final List<QueryCommand<Weighttype, Modetype>> commands, Neuroid<Weighttype, Modetype> network) {
-        Set<Neuroid<Weighttype, Modetype>> workingNeuroidSet = null;
-        Set<Neuroid.NeuroidGraph.Edge<Weighttype, Modetype>> workingEdgesSet = null;
+    public static<Weighttype, Modetype> QueryResult<Weighttype, Modetype> query(final List<QueryCommand<Weighttype, Modetype>> commands, Network<Weighttype, Modetype> network) {
+        Set<Network<Weighttype, Modetype>> workingNeuroidSet = null;
+        Set<IEdge> workingEdgesSet = null;
 
         for( final QueryCommand<Weighttype, Modetype> currentCommand : commands ) {
             if( currentCommand instanceof GetInEdgesByNeuroidIndexQueryCommand) {
                 GetInEdgesByNeuroidIndexQueryCommand<Weighttype, Modetype> castedCurrentCommand = (GetInEdgesByNeuroidIndexQueryCommand<Weighttype, Modetype>)currentCommand;
 
-                workingEdgesSet = network.getGraph().graph.getInEdges(network.getGraph().neuronNodes[castedCurrentCommand.neuroidIndex]);
+                INetworkAccessor<Weighttype, Modetype> networkAccessor = network.getNetworkAccessor();
+                INeuronAccessor<Weighttype, Modetype> neuroidAccessor = networkAccessor.getNeuroidAccessorByAdress(new NeuronAdress(castedCurrentCommand.neuroidIndex, NeuronAdress.EnumType.HIDDEN));
+                workingEdgesSet = neuroidAccessor.getInEdgesAccessor().asSet();
             }
             else if( currentCommand instanceof FilterEdgeSourceQueryCommand ) {
                 FilterEdgeSourceQueryCommand<Weighttype, Modetype> castedCurrentCommand = (FilterEdgeSourceQueryCommand<Weighttype, Modetype>)currentCommand;
 
-                final Set<Neuroid.NeuroidGraph.Edge<Weighttype, Modetype>> queryEdges = workingEdgesSet;
+                final Set<IEdge> queryEdges = workingEdgesSet;
                 workingEdgesSet = new HashSet<>();
 
-                for( final Neuroid.NeuroidGraph.Edge<Weighttype, Modetype> iterationEdge : queryEdges ) {
-                    if( castedCurrentCommand.filteringNeuroidSet.contains(iterationEdge.getSourceNode()) ) {
+                for( final IEdge iterationEdge : queryEdges ) {
+                    if( castedCurrentCommand.filteringNeuroidSet.contains(iterationEdge.getSourceAdress()) ) {
                         workingEdgesSet.add(iterationEdge);
                     }
                 }
@@ -71,10 +75,10 @@ public class Query {
             else if( currentCommand instanceof FilterEdgeByCondition) {
                 FilterEdgeByCondition<Weighttype, Modetype> castedCurrentCommand = (FilterEdgeByCondition<Weighttype, Modetype>)currentCommand;
 
-                final Set<Neuroid.NeuroidGraph.Edge<Weighttype, Modetype>> queryEdges = workingEdgesSet;
+                final Set<IEdge> queryEdges = workingEdgesSet;
                 workingEdgesSet = new HashSet<>();
 
-                for( final Neuroid.NeuroidGraph.Edge<Weighttype, Modetype> iterationEdge : queryEdges ) {
+                for( final IEdge iterationEdge : queryEdges ) {
                     if( castedCurrentCommand.query(iterationEdge) ) {
                         workingEdgesSet.add(iterationEdge);
                     }
